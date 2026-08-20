@@ -1,0 +1,24 @@
+[
+  {
+    "id": "1786183542037",
+    "name": "Mehran Khan",
+    "email": "mkmehran123khan@gmail.com",
+    "password": "$2b$10$lEcdBWDp51UJZhFl6hDBIOl2byB5n4Lq54HE3kYFoHcCydYBstAJq",
+    "bargainName": "Mehran",
+    "logo": "/uploads/logos/logo-1786183541925-486574680.png",
+    "logoFileName": "logo-1786183541925-486574680.png",
+    "createdAt": "2026-08-08T10:05:42.037Z",
+    "updatedAt": "2026-08-08T10:05:42.045Z"
+  },
+  {
+    "id": "1786183839133",
+    "name": "mehran",
+    "email": "mkmehran@gmail.com",
+    "password": "$2b$10$oW7RvM9kde6dO4SSylEltOnI.hcRAKGE/TTiyVFiJVoWrlVujQRpG",
+    "bargainName": "true",
+    "logo": null,
+    "logoFileName": null,
+    "createdAt": "2026-08-08T10:10:39.135Z",
+    "updatedAt": "2026-08-08T10:10:39.135Z"
+  }
+]
