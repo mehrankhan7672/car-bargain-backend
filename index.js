@@ -116,17 +116,14 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📁 Uploads directory: ${path.join(__dirname, "uploads")}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`✅ Available routes:`);
-  console.log(`   - POST /api/auth/register`);
-  console.log(`   - POST /api/auth/login`);
-  console.log(`   - GET  /health`);
-  console.log(`   - GET  /api/cars`);
-  console.log(`   - POST /api/cars`);
-  console.log(`   - GET  /api/exchanges`);
-  console.log(`   - POST /api/exchanges`);
-  console.log(`   - GET  /api/logs`);
-});
+// Only listen locally — Vercel handles this differently
+if (process.env.NODE_ENV !== "production") {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`📁 Uploads directory: ${path.join(__dirname, "uploads")}`);
+    console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+}
+
+// Required for Vercel
+export default app;
