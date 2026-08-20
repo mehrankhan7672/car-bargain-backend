@@ -47,6 +47,13 @@ app.use((req, res, next) => {
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "Car Bargain Backend API is running 🚗",
+    status: "OK",
+  });
+});
 app.use("/api/auth", authRoutes);
 app.use('/api/cars', carRoutes);
 app.use('/api/dealers', dealerRoutes);
