@@ -1,4 +1,6 @@
 // src/controllers/auth/authController.js
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
 import jwt from "jsonwebtoken";
 import multer from "multer";
 import path from "path";
@@ -12,21 +14,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Configure multer for file uploads - FIXED PATH
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, "../../../uploads/logos");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-      console.log("Created uploads directory:", uploadDir);
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    const ext = path.extname(file.originalname);
-    const filename = `logo-${uniqueSuffix}${ext}`;
-    console.log("Saving logo as:", filename);
-    cb(null, filename);
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "logos",
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
   },
 });
 
@@ -124,7 +122,7 @@ export const register = async (req, res) => {
       email,
       password: hashedPassword, // Store the hashed password
       bargainName,
-      logo: logoFile ? `/uploads/logos/${logoFile.filename}` : null,
+      logo: logoFile ? logoFile.path : null,
       logoFileName: logoFile ? logoFile.filename : null,
     });
 
