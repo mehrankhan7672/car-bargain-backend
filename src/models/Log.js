@@ -13,13 +13,13 @@ const logSchema = new mongoose.Schema(
     category: {
       type: String,
       required: [true, 'Log category is required'],
-      enum: ['Car', 'Exchange', 'Employee', 'Salary', 'Dealer', 'Other'],
+            enum: ['Car', 'Exchange', 'Employee', 'Salary', 'Dealer', 'Expense', 'Auth', 'Other'],
       index: true,
     },
     action: {
       type: String,
       required: [true, 'Log action is required'],
-      enum: ['Created', 'Updated', 'Deleted', 'Status Changed'],
+            enum: ['Created', 'Updated', 'Deleted', 'Status Changed', 'Payment', 'Login'],
     },
     title: {
       type: String,

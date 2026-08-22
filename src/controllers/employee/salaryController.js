@@ -365,11 +365,23 @@ export const updateSalary = async (req, res) => {
       }
     ).populate('employeeId', 'name role phone');
     
-    res.status(200).json({
-      success: true,
-      message: 'Salary payment updated successfully',
-      data: updatedSalary,
-    });
+       await createLog({
+        userId: req.userId,
+        category: 'Salary',
+        action: 'Updated',
+        title: `Salary record updated: ${updatedSalary.employeeName}`,
+        description: `${updatedSalary.paymentType} · ${updatedSalary.month} · Status: ${updatedSalary.status}`,
+        refId: updatedSalary._id,
+        refModel: 'Salary',
+        amount: updatedSalary.payment,
+        performedBy: req.body.performedBy || 'System',
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Salary payment updated successfully',
+        data: updatedSalary,
+      });
   } catch (error) {
     if (error.name === 'CastError') {
       return res.status(404).json({
@@ -404,8 +416,20 @@ export const deleteSalary = async (req, res) => {
       await Salary.deleteMany({ referenceId: salary.id, userId: req.userId });
     }
     
-    await Salary.findOneAndDelete({ _id: req.params.id, userId: req.userId });
-    
+       await Salary.findOneAndDelete({ _id: req.params.id, userId: req.userId });
+
+    await createLog({
+      userId: req.userId,
+      category: 'Salary',
+      action: 'Deleted',
+      title: `Salary record removed: ${salary.employeeName}`,
+      description: `${salary.paymentType} · ${salary.month}`,
+      refId: salary._id,
+      refModel: 'Salary',
+      amount: salary.payment,
+      performedBy: req.body?.performedBy || 'System',
+    });
+
     res.status(200).json({
       success: true,
       message: 'Salary payment deleted successfully',

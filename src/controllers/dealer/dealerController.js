@@ -26,11 +26,12 @@ export const createDealer = async (req, res) => {
       notes: notes || ''
     });
 
-    await createLog({
+      await createLog({
       userId: req.userId,
       category: 'Dealer',
       action: 'Created',
       title: `Dealer added: ${dealer.name}`,
+      description: `Phone: ${dealer.phone} · CNIC: ${dealer.cnic}`,
       refId: dealer._id,
       refModel: 'Dealer',
       performedBy: req.body.performedBy || 'System',
@@ -197,6 +198,17 @@ export const updateDealer = async (req, res) => {
       }
     );
 
+        await createLog({
+        userId: req.userId,
+        category: 'Dealer',
+        action: 'Updated',
+        title: `Dealer updated: ${updatedDealer.name}`,
+        description: `Phone: ${updatedDealer.phone} · CNIC: ${updatedDealer.cnic}`,
+        refId: updatedDealer._id,
+        refModel: 'Dealer',
+        performedBy: req.body.performedBy || 'System',
+      });
+
     res.status(200).json({
       success: true,
       data: updatedDealer,
@@ -240,13 +252,24 @@ export const deleteDealer = async (req, res) => {
       });
     }
 
-    await Dealer.findOneAndDelete({ _id: id, userId: req.userId });
+      await Dealer.findOneAndDelete({ _id: id, userId: req.userId });
 
-    res.status(200).json({
-      success: true,
-      data: {},
-      message: 'Dealer deleted successfully'
-    });
+      await createLog({
+        userId: req.userId,
+        category: 'Dealer',
+        action: 'Deleted',
+        title: `Dealer removed: ${dealer.name}`,
+        description: `Phone: ${dealer.phone} · CNIC: ${dealer.cnic}`,
+        refId: dealer._id,
+        refModel: 'Dealer',
+        performedBy: req.body?.performedBy || 'System',
+      });
+
+      res.status(200).json({
+        success: true,
+        data: {},
+        message: 'Dealer deleted successfully'
+      });
   } catch (error) {
     console.error('Delete dealer error:', error);
     res.status(500).json({
