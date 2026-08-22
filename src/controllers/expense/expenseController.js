@@ -60,22 +60,31 @@ export const createExpense = async (req, res) => {
 // @access  Private
 export const getExpenses = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 500; // list page computes stats client-side over all rows
-    const search = req.query.search || '';
+    // Parse query parameters with defaults
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.max(1, parseInt(req.query.limit) || 500);
+    const search = (req.query.search || '').trim();
     const category = req.query.category;
     const startDate = req.query.startDate;
     const endDate = req.query.endDate;
 
     const skip = (page - 1) * limit;
 
+    // Build the filter
     const filter = { userId: req.userId };
-    if (category && category !== 'All') filter.category = category;
+
+    if (category && category !== 'All') {
+      filter.category = category;
+    }
+
+    // Date range filter
     if (startDate || endDate) {
       filter.date = {};
       if (startDate) filter.date.$gte = new Date(startDate);
       if (endDate) filter.date.$lte = new Date(endDate);
     }
+
+    // Search across title, notes, and category (case‑insensitive)
     if (search) {
       filter.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -84,11 +93,17 @@ export const getExpenses = async (req, res) => {
       ];
     }
 
+    // Execute queries in parallel
     const [expenses, total] = await Promise.all([
-      Expense.find(filter).sort({ date: -1 }).skip(skip).limit(limit),
+      Expense.find(filter)
+        .sort({ date: -1 })      // newest first
+        .skip(skip)
+        .limit(limit)
+        .lean(),                // return plain JS objects (slightly faster)
       Expense.countDocuments(filter),
     ]);
 
+    // Send consistent response
     res.status(200).json({
       success: true,
       data: expenses,
