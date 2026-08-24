@@ -323,4 +323,205 @@ export const getUserById = async (req, res) => {
       message: "Internal server error",
     });
   }
+  // Add these exports to src/controllers/auth/authController.js
+// (keep existing imports — bcrypt, User, etc. are already imported above)
+
+// Create a new staff account — admin only
+// @route   POST /api/auth/staff
+// @access  Private (admin)
+export const addStaffUser = async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Only admins can add staff accounts",
+      });
+    }
+
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, email, and password are required",
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email format",
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already registered",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const staffUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role: "staff",
+      // Staff accounts belong to the same dealership as the admin creating them
+      bargainName: req.user.bargainName,
+    });
+
+    await staffUser.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Staff account created successfully",
+      user: staffUser.getPublicProfile(),
+    });
+  } catch (error) {
+    console.error("Error adding staff user:", error);
+
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((e) => e.message);
+      return res.status(400).json({ success: false, message: messages.join(", ") });
+    }
+
+    if (error.code === 11000) {
+      return res.status(400).json({ success: false, message: "Email already exists" });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
+
+// Update an existing staff account — admin only
+// @route   PUT /api/auth/staff/:id
+// @access  Private (admin)
+export const updateStaffUser = async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Only admins can update staff accounts",
+      });
+    }
+
+    const { id } = req.params;
+    const { name, email, isActive, password } = req.body;
+
+    const staffUser = await User.findById(id);
+
+    if (!staffUser) {
+      return res.status(404).json({ success: false, message: "Staff account not found" });
+    }
+
+    if (staffUser.role !== "staff") {
+      return res.status(400).json({
+        success: false,
+        message: "This account is not a staff account",
+      });
+    }
+
+    if (email && email !== staffUser.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ success: false, message: "Invalid email format" });
+      }
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ success: false, message: "Email already in use" });
+      }
+      staffUser.email = email;
+    }
+
+    if (name) staffUser.name = name;
+    if (typeof isActive === "boolean") staffUser.isActive = isActive;
+
+    if (password) {
+      if (password.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: "Password must be at least 6 characters",
+        });
+      }
+      staffUser.password = await bcrypt.hash(password, 10);
+    }
+
+    await staffUser.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Staff account updated successfully",
+      user: staffUser.getPublicProfile(),
+    });
+  } catch (error) {
+    console.error("Error updating staff user:", error);
+
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((e) => e.message);
+      return res.status(400).json({ success: false, message: messages.join(", ") });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
+
+// Remove a staff account — admin only
+// @route   DELETE /api/auth/staff/:id
+// @access  Private (admin)
+export const removeStaffUser = async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Only admins can remove staff accounts",
+      });
+    }
+
+    const { id } = req.params;
+    const staffUser = await User.findById(id);
+
+    if (!staffUser) {
+      return res.status(404).json({ success: false, message: "Staff account not found" });
+    }
+
+    if (staffUser.role !== "staff") {
+      return res.status(400).json({
+        success: false,
+        message: "This account is not a staff account",
+      });
+    }
+
+    await staffUser.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: "Staff account removed successfully",
+    });
+  } catch (error) {
+    console.error("Error removing staff user:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
 };
