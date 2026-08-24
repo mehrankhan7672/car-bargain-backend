@@ -8,6 +8,7 @@ import fs from "fs";
 import bcrypt from "bcryptjs";
 import { fileURLToPath } from "url";
 import User from "../../models/User.js";
+import { response } from "express";
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -321,6 +322,238 @@ export const getUserById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Internal server error",
+    });
+  }
+};
+export const addStaff = async (req, res) => {
+  try {
+    const { name, email, password, permissions } = req.body;
+
+    // Validation
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name, email and password are required',
+      });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters',
+      });
+    }
+
+    // Check existing email
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return res.status(400).json({
+        success: false,
+        message: 'A user with this email already exists',
+      });
+    }
+
+    // Determine owner ID (the person this staff reports to)
+    const ownerId = req.user.tenantId || req.user._id;
+
+    // Fetch the owner to get their bargainName
+    const owner = await User.findById(ownerId).select('bargainName');
+    if (!owner) {
+      return res.status(404).json({
+        success: false,
+        message: 'Owner not found',
+      });
+    }
+
+    // --- HASH THE PASSWORD ---
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Create staff user – inherit bargainName from owner and store hashed password
+    const staffUser = new User({
+      name,
+      email,
+      password: hashedPassword,        // ✅ explicitly hashed
+      role: 'staff',
+      tenantId: ownerId,
+      bargainName: owner.bargainName,
+      permissions: permissions || { canView: true, canAdd: true, canEdit: true, canDelete: false },
+      isActive: true,
+    });
+
+    await staffUser.save();
+
+    // Return user data without password
+    const userResponse = staffUser.toObject();
+    delete userResponse.password;
+
+    res.status(201).json({
+      success: true,
+      message: 'Staff account created successfully',
+      user: userResponse,
+    });
+  } catch (error) {
+    console.error('Add staff error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while creating staff account',
+      details: error.message,   // remove in production after debugging
+    });
+  }
+};
+// Get all staff belonging to the logged-in owner/tenant
+// @route   GET /api/auth/staff
+// @access  Private
+export const getAllStaff = async (req, res) => {
+  try {
+    const ownerId = req.user.tenantId || req.user._id;
+
+    const staff = await User.find({ role: "staff", tenantId: ownerId })
+      .select("-password")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: staff.length,
+      staff,
+    });
+  } catch (error) {
+    console.error("Get all staff error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching staff",
+      details: error.message,
+    });
+  }
+};
+
+// Update a staff member's details (name, email, permissions)
+// @route   PUT /api/auth/staff/:id
+// @access  Private
+export const updateStaff = async (req, res) => {
+  try {
+    const ownerId = req.user.tenantId || req.user._id;
+    const { id } = req.params;
+    const { name, email, permissions } = req.body;
+
+    const staffUser = await User.findOne({ _id: id, role: "staff", tenantId: ownerId });
+
+    if (!staffUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Staff account not found",
+      });
+    }
+
+    if (email && email !== staffUser.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ success: false, message: "Invalid email format" });
+      }
+      const existing = await User.findOne({ email });
+      if (existing) {
+        return res.status(400).json({ success: false, message: "A user with this email already exists" });
+      }
+      staffUser.email = email;
+    }
+
+    if (name) staffUser.name = name;
+    if (permissions) staffUser.permissions = { ...staffUser.permissions, ...permissions };
+
+    await staffUser.save();
+
+    const userResponse = staffUser.toObject();
+    delete userResponse.password;
+
+    res.status(200).json({
+      success: true,
+      message: "Staff account updated successfully",
+      user: userResponse,
+    });
+  } catch (error) {
+    console.error("Update staff error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while updating staff account",
+      details: error.message,
+    });
+  }
+};
+
+// Activate/deactivate a staff member
+// @route   PATCH /api/auth/staff/:id/status
+// @access  Private
+export const updateStaffStatus = async (req, res) => {
+  try {
+    const ownerId = req.user.tenantId || req.user._id;
+    const { id } = req.params;
+    const { isActive } = req.body;
+
+    if (typeof isActive !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "isActive (boolean) is required",
+      });
+    }
+
+    const staffUser = await User.findOne({ _id: id, role: "staff", tenantId: ownerId });
+
+    if (!staffUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Staff account not found",
+      });
+    }
+
+    staffUser.isActive = isActive;
+    await staffUser.save({ validateBeforeSave: false });
+
+    const userResponse = staffUser.toObject();
+    delete userResponse.password;
+
+    res.status(200).json({
+      success: true,
+      message: `Staff account ${isActive ? "activated" : "deactivated"} successfully`,
+      user: userResponse,
+    });
+  } catch (error) {
+    console.error("Update staff status error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while updating staff status",
+      details: error.message,
+    });
+  }
+};
+
+// Delete a staff member
+// @route   DELETE /api/auth/staff/:id
+// @access  Private
+export const deleteStaff = async (req, res) => {
+  try {
+    const ownerId = req.user.tenantId || req.user._id;
+    const { id } = req.params;
+
+    const staffUser = await User.findOne({ _id: id, role: "staff", tenantId: ownerId });
+
+    if (!staffUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Staff account not found",
+      });
+    }
+
+    await staffUser.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: "Staff account deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete staff error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while deleting staff account",
+      details: error.message,
     });
   }
 };

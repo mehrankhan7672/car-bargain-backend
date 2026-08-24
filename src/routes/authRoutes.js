@@ -6,7 +6,12 @@ import {
     getMe,
     getUsers,
     getUserById,
-    upload
+    upload,
+    addStaff,
+    getAllStaff,
+    updateStaff,
+    updateStaffStatus,
+    deleteStaff
 } from "../controllers/auth/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -25,5 +30,12 @@ router.get("/me", getMe);
 // data can't be scraped by anyone who finds the URL.
 router.get("/users", getUsers);
 router.get("/users/:id", getUserById);
+
+// Staff management
+router.post("/staff", addStaff);
+router.get("/staff", getAllStaff);
+router.put("/staff/:id", updateStaff);
+router.put("/staff/:id/status", updateStaffStatus);
+router.delete("/staff/:id", deleteStaff);
 
 export default router;
