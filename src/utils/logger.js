@@ -17,6 +17,7 @@ export const createLog = async ({
   refModel = null,
   amount = null,
   performedBy = 'System',
+  performedByUserId = null,
   meta = {},
 }) => {
   try {

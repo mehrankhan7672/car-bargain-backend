@@ -27,7 +27,8 @@ export const createExpense = async (req, res) => {
       refId: expense._id,
       refModel: 'Expense',
       amount: expense.amount,
-      performedBy: req.body.performedBy || 'System',
+      performedBy: req.user.name,
+      performedByUserId: req.user._id,
     });
 
     res.status(201).json({
@@ -185,7 +186,8 @@ export const updateExpense = async (req, res) => {
       refId: expense._id,
       refModel: 'Expense',
       amount: expense.amount,
-      performedBy: req.body?.performedBy || 'System',
+      performedBy: req.user.name,
+      performedByUserId: req.user._id,
     });
 
     res.status(200).json({
@@ -233,7 +235,8 @@ export const deleteExpense = async (req, res) => {
       refId: expense._id,
       refModel: 'Expense',
       amount: expense.amount,
-      performedBy: req.body?.performedBy || 'System',
+      performedBy: req.user.name,
+      performedByUserId: req.user._id,
     });
 
     res.status(200).json({

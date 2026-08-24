@@ -224,7 +224,8 @@ export const createExchange = async (req, res) => {
       refId: exchange._id,
       refModel: 'Exchange',
       amount: exchange.finalAmount,
-      performedBy: req.body.performedBy || 'System',
+      performedBy: req.user.name,
+      performedByUserId: req.user._id,
     });
 
     if (exchange.showroomCar.carId) {
@@ -465,7 +466,8 @@ export const updateExchange = async (req, res) => {
       refId: exchange._id,
       refModel: 'Exchange',
       amount: exchange.finalAmount,
-      performedBy: req.body.performedBy || 'System',
+      performedBy: req.user.name,
+      performedByUserId: req.user._id,
     });
 
     if (exchange.showroomCar.carId) {
@@ -516,7 +518,8 @@ export const deleteExchange = async (req, res) => {
       refId: exchange._id,
       refModel: 'Exchange',
       amount: exchange.finalAmount,
-      performedBy: req.body.performedBy || 'System',
+      performedBy: req.user.name,
+      performedByUserId: req.user._id,
     });
 
     res.status(200).json({ success: true, data: {}, message: 'Exchange deleted successfully' });
@@ -620,7 +623,8 @@ export const recordPayment = async (req, res) => {
       refId: exchange._id,
       refModel: 'Exchange',
       amount: amountNum,
-      performedBy: req.body.performedBy || 'System',
+      performedBy: req.user.name,
+      performedByUserId: req.user._id,
     });
 
     // Populate and return updated exchange with payments

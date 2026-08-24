@@ -283,7 +283,8 @@ if (finalPaymentType === 'Partial Salary' && paymentAmount < fullSalary) {
       refId: salary._id,
       refModel: 'Salary',
       amount: paymentAmount,
-      performedBy: req.body.performedBy || 'System',
+      performedBy: req.user.name,
+      performedByUserId: req.user._id,
     });
 
     res.status(201).json({
@@ -374,7 +375,8 @@ export const updateSalary = async (req, res) => {
         refId: updatedSalary._id,
         refModel: 'Salary',
         amount: updatedSalary.payment,
-        performedBy: req.body.performedBy || 'System',
+        performedBy: req.user.name,
+        performedByUserId: req.user._id,
       });
 
       res.status(200).json({
@@ -427,7 +429,8 @@ export const deleteSalary = async (req, res) => {
       refId: salary._id,
       refModel: 'Salary',
       amount: salary.payment,
-      performedBy: req.body?.performedBy || 'System',
+      performedBy: req.user.name,
+      performedByUserId: req.user._id,
     });
 
     res.status(200).json({

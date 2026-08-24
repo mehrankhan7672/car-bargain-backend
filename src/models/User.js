@@ -40,10 +40,27 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
-  role: {
+    role: {
     type: String,
     enum: ['user', 'admin', 'staff'],
     default: 'user',
+  },
+  tenantId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+    index: true,
+  },
+  addedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+  },
+  permissions: {
+    canView: { type: Boolean, default: true },
+    canAdd: { type: Boolean, default: true },
+    canEdit: { type: Boolean, default: true },
+    canDelete: { type: Boolean, default: true },
   },
   isActive: {
     type: Boolean,

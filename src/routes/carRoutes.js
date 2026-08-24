@@ -55,13 +55,12 @@ const router = express.Router();
 // Every car route requires a logged-in user
 router.use(protect);
 
-router.get('/stats', getCarStats);
-router.get('/search/user', searchCarsByUser);
-
-router.post('/', upload.array('images', 10), createCar);
-router.get('/', getAllCars);
-router.get('/:id', getCarById);
-router.put('/:id', upload.array('images', 10), updateCar);
-router.delete('/:id', deleteCar);
+router.get('/stats', checkPermission('canView'), getCarStats);
+router.get('/search/user', checkPermission('canView'), searchCarsByUser);
+router.post('/', checkPermission('canAdd'), upload.array('images', 10), createCar);
+router.get('/', checkPermission('canView'), getAllCars);
+router.get('/:id', checkPermission('canView'), getCarById);
+router.put('/:id', checkPermission('canEdit'), upload.array('images', 10), updateCar);
+router.delete('/:id', checkPermission('canDelete'), deleteCar);
 
 export default router;

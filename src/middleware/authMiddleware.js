@@ -57,8 +57,8 @@ export const protect = async (req, res, next) => {
       });
     }
 
-    req.user = user;
-    req.userId = user._id;
+        req.user = user;
+    req.userId = user.tenantId || user._id;
     next();
   } catch (error) {
     console.error("Auth middleware error:", error);
@@ -67,6 +67,26 @@ export const protect = async (req, res, next) => {
       message: "Internal server error during authentication",
     });
   }
+};
+
+export const checkPermission = (permissionKey) => (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: "Not authorized" });
+  }
+
+  const isOwner = !req.user.tenantId;
+  if (isOwner) return next();
+
+  const allowed = req.user.permissions?.[permissionKey];
+  if (!allowed) {
+    const actionLabel = permissionKey.replace("can", "").toLowerCase();
+    return res.status(403).json({
+      success: false,
+      message: `You don't have permission to ${actionLabel} records. Ask the account owner to grant it.`,
+    });
+  }
+
+  next();
 };
 
 export default protect;

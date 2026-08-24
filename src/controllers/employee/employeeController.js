@@ -111,7 +111,8 @@ export const createEmployee = async (req, res) => {
       refId: employee._id,
       refModel: 'Employee',
       amount: employee.salary,
-      performedBy: req.body.performedBy || 'System',
+      sperformedBy: req.user.name,
+      performedByUserId: req.user._id,
     });
 
     res.status(201).json({
@@ -185,7 +186,8 @@ export const updateEmployee = async (req, res) => {
       refId: employee._id,
       refModel: 'Employee',
       amount: employee.salary,
-      performedBy: req.body.performedBy || 'System',
+      performedBy: req.user.name,
+      performedByUserId: req.user._id,
     });
 
     res.status(200).json({
@@ -231,7 +233,8 @@ export const deleteEmployee = async (req, res) => {
       refId: employee._id,
       refModel: 'Employee',
       amount: employee.salary,
-      performedBy: req.body?.performedBy || 'System',
+      performedBy: req.user.name,
+      performedByUserId: req.user._id,
     });
 
     res.status(200).json({

@@ -44,10 +44,19 @@ const logSchema = new mongoose.Schema(
       type: Number,
       default: null,
     },
-    performedBy: {
+       performedBy: {
       type: String,
       trim: true,
       default: 'System',
+    },
+    // Real, queryable reference to which staff account performed this
+    // action — performedBy alone was just a display string, sourced from
+    // req.body, which no form ever actually populated.
+    performedByUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+      index: true,
     },
     meta: {
       type: mongoose.Schema.Types.Mixed,

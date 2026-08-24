@@ -34,7 +34,8 @@ export const createDealer = async (req, res) => {
       description: `Phone: ${dealer.phone} · CNIC: ${dealer.cnic}`,
       refId: dealer._id,
       refModel: 'Dealer',
-      performedBy: req.body.performedBy || 'System',
+      performedBy: req.user.name,
+      performedByUserId: req.user._id,
     });
 
     res.status(201).json({
@@ -206,7 +207,8 @@ export const updateDealer = async (req, res) => {
         description: `Phone: ${updatedDealer.phone} · CNIC: ${updatedDealer.cnic}`,
         refId: updatedDealer._id,
         refModel: 'Dealer',
-        performedBy: req.body.performedBy || 'System',
+        performedBy: req.user.name,
+        performedByUserId: req.user._id,
       });
 
     res.status(200).json({
@@ -262,7 +264,8 @@ export const deleteDealer = async (req, res) => {
         description: `Phone: ${dealer.phone} · CNIC: ${dealer.cnic}`,
         refId: dealer._id,
         refModel: 'Dealer',
-        performedBy: req.body?.performedBy || 'System',
+        performedBy: req.user.name,
+        performedByUserId: req.user._id,
       });
 
       res.status(200).json({

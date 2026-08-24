@@ -237,7 +237,8 @@ export const createCar = async (req, res) => {
       refId: car._id,
       refModel: 'Car',
       amount: car.salePrice || null,
-      performedBy: req.body.performedBy || 'System',
+      performedBy: req.user.name,
+      performedByUserId: req.user._id,
     });
 
     res.status(201).json({
@@ -755,7 +756,8 @@ export const updateCar = async (req, res) => {
       refId: car._id,
       refModel: 'Car',
       amount: car.salePrice || null,
-      performedBy: req.body?.performedBy || 'System',
+      performedBy: req.user.name,
+      performedByUserId: req.user._id,
     });
 
     res.status(200).json({
@@ -861,7 +863,8 @@ export const deleteCar = async (req, res) => {
       refId: car._id,
       refModel: 'Car',
       amount: car.salePrice || null,
-      performedBy: req.body?.performedBy || 'System',
+      performedBy: req.user.name,
+      performedByUserId: req.user._id,
     });
 
     res.status(200).json({
