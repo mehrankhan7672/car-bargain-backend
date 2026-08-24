@@ -6,10 +6,7 @@ import {
     getMe,
     getUsers,
     getUserById,
-    upload,
-    addStaffUser,
-    updateStaffUser,
-    removeStaffUser,
+    upload
 } from "../controllers/auth/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -28,10 +25,5 @@ router.get("/me", getMe);
 // data can't be scraped by anyone who finds the URL.
 router.get("/users", getUsers);
 router.get("/users/:id", getUserById);
-
-// Staff management — admin only (role check happens inside each controller)
-router.post("/staff", addStaffUser);
-router.put("/staff/:id", updateStaffUser);
-router.delete("/staff/:id", removeStaffUser);
 
 export default router;
