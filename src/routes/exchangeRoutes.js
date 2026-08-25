@@ -1,5 +1,5 @@
 // src/routes/exchangeRoutes.js
-import express from 'express';
+import express from "express";
 import {
   createExchange,
   getExchanges,
@@ -9,8 +9,8 @@ import {
   getExchangeStats,
   recordPayment,
   getExchangePayments,
-} from '../controllers/exchange/exchangeController.js';
-import { protect } from '../middleware/authMiddleware.js';
+} from "../controllers/exchange/exchangeController.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -18,12 +18,16 @@ const router = express.Router();
 router.use(protect);
 
 // ✅ Specific routes FIRST
-router.route('/stats').get(getExchangeStats);
-router.route('/:id/payment').put(recordPayment); // 👈 MUST come before /:id
-router.route('/:id/payments').get(getExchangePayments);
+router.route("/stats").get(getExchangeStats);
+router.route("/:id/payment").put(recordPayment); // 👈 MUST come before /:id
+router.route("/:id/payments").get(getExchangePayments);
 
 // ✅ Generic CRUD routes LAST
-router.route('/').post(createExchange).get(getExchanges);
-router.route('/:id').get(getExchangeById).put(updateExchange).delete(deleteExchange);
+router.route("/").post(createExchange).get(getExchanges);
+router
+  .route("/:id")
+  .get(getExchangeById)
+  .put(updateExchange)
+  .delete(deleteExchange);
 
 export default router;

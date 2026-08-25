@@ -28,12 +28,14 @@ const PORT = process.env.PORT || 5000;
 connectDB();
 
 // Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:8080",
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:8080",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 
 // Body parsing middleware
 app.use(express.json());
@@ -57,17 +59,17 @@ app.get("/", (req, res) => {
   });
 });
 app.use("/api/auth", authRoutes);
-app.use('/api/cars', carRoutes);
-app.use('/api/dealers', dealerRoutes);
-app.use('/api/employees', employeeRoutes);
-app.use('/api/salaries', salaryRoutes);
-app.use('/api/exchanges', exchangeRoutes);
-app.use('/api/logs', logRoutes);
-app.use('/api/expenses', protect, expenseRoutes);
+app.use("/api/cars", carRoutes);
+app.use("/api/dealers", dealerRoutes);
+app.use("/api/employees", employeeRoutes);
+app.use("/api/salaries", salaryRoutes);
+app.use("/api/exchanges", exchangeRoutes);
+app.use("/api/logs", logRoutes);
+app.use("/api/expenses", protect, expenseRoutes);
 // Health check endpoint
 app.get("/health", (req, res) => {
-  res.json({ 
-    status: "OK", 
+  res.json({
+    status: "OK",
     message: "Server is running",
     timestamp: new Date().toISOString(),
   });
@@ -86,11 +88,11 @@ app.use((err, req, res, next) => {
   console.error("Error:", err);
 
   // Mongoose validation error
-  if (err.name === 'ValidationError') {
-    const messages = Object.values(err.errors).map(e => e.message);
+  if (err.name === "ValidationError") {
+    const messages = Object.values(err.errors).map((e) => e.message);
     return res.status(400).json({
       success: false,
-      message: messages.join(', '),
+      message: messages.join(", "),
     });
   }
 
@@ -104,10 +106,10 @@ app.use((err, req, res, next) => {
   }
 
   // JWT error
-  if (err.name === 'JsonWebTokenError') {
+  if (err.name === "JsonWebTokenError") {
     return res.status(401).json({
       success: false,
-      message: 'Invalid token',
+      message: "Invalid token",
     });
   }
 
@@ -131,7 +133,7 @@ if (process.env.NODE_ENV !== "production") {
   app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     console.log(`📁 Uploads directory: ${path.join(__dirname, "uploads")}`);
-    console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
   });
 }
 

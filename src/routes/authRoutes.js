@@ -1,17 +1,17 @@
 // src/routes/authRoutes.js
 import express from "express";
 import {
-    register,
-    login,
-    getMe,
-    getUsers,
-    getUserById,
-    upload,
-    addStaff,
-    getAllStaff,
-    updateStaff,
-    updateStaffStatus,
-    deleteStaff
+  register,
+  login,
+  getMe,
+  getUsers,
+  getUserById,
+  upload,
+  addStaff,
+  getAllStaff,
+  updateStaff,
+  updateStaffStatus,
+  deleteStaff,
 } from "../controllers/auth/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
 

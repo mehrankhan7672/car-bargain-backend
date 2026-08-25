@@ -26,7 +26,7 @@ export const protect = async (req, res, next) => {
     try {
       decoded = jwt.verify(
         token,
-        process.env.JWT_SECRET || "your-secret-key-change-this-in-production"
+        process.env.JWT_SECRET || "your-secret-key-change-this-in-production",
       );
     } catch (err) {
       if (err.name === "TokenExpiredError") {
@@ -57,7 +57,7 @@ export const protect = async (req, res, next) => {
       });
     }
 
-        req.user = user;
+    req.user = user;
     req.userId = user.tenantId || user._id;
     next();
   } catch (error) {

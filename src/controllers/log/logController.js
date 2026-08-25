@@ -1,5 +1,5 @@
 // src/controllers/log/logController.js
-import Log from '../../models/Log.js';
+import Log from "../../models/Log.js";
 
 // @desc    Get all logs with pagination, category filter & search
 // @route   GET /api/logs
@@ -12,8 +12,8 @@ export const getLogs = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const filter = { userId: req.userId };
-    if (category && category !== 'All') filter.category = category;
-    if (action && action !== 'All') filter.action = action;
+    if (category && category !== "All") filter.category = category;
+    if (action && action !== "All") filter.action = action;
 
     if (startDate || endDate) {
       filter.createdAt = {};
@@ -23,9 +23,9 @@ export const getLogs = async (req, res) => {
 
     if (search) {
       filter.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { performedBy: { $regex: search, $options: 'i' } },
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+        { performedBy: { $regex: search, $options: "i" } },
       ];
     }
 
@@ -43,13 +43,13 @@ export const getLogs = async (req, res) => {
         total,
         pages: Math.ceil(total / limit),
       },
-      message: 'Logs retrieved successfully',
+      message: "Logs retrieved successfully",
     });
   } catch (error) {
-    console.error('Get logs error:', error);
+    console.error("Get logs error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get logs',
+      message: "Failed to get logs",
       error: error.message,
     });
   }
@@ -62,7 +62,7 @@ export const getLogStats = async (req, res) => {
     const [byCategory, total] = await Promise.all([
       Log.aggregate([
         { $match: { userId: req.userId } },
-        { $group: { _id: '$category', count: { $sum: 1 } } },
+        { $group: { _id: "$category", count: { $sum: 1 } } },
       ]),
       Log.countDocuments({ userId: req.userId }),
     ]);
@@ -75,13 +75,13 @@ export const getLogStats = async (req, res) => {
     res.status(200).json({
       success: true,
       data: { total, byCategory: counts },
-      message: 'Log statistics retrieved successfully',
+      message: "Log statistics retrieved successfully",
     });
   } catch (error) {
-    console.error('Get log stats error:', error);
+    console.error("Get log stats error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get log statistics',
+      message: "Failed to get log statistics",
       error: error.message,
     });
   }
@@ -94,15 +94,17 @@ export const deleteLog = async (req, res) => {
     const { id } = req.params;
     const log = await Log.findOne({ _id: id, userId: req.userId });
     if (!log) {
-      return res.status(404).json({ success: false, message: 'Log not found' });
+      return res.status(404).json({ success: false, message: "Log not found" });
     }
     await Log.findOneAndDelete({ _id: id, userId: req.userId });
-    res.status(200).json({ success: true, data: {}, message: 'Log deleted successfully' });
+    res
+      .status(200)
+      .json({ success: true, data: {}, message: "Log deleted successfully" });
   } catch (error) {
-    console.error('Delete log error:', error);
+    console.error("Delete log error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to delete log',
+      message: "Failed to delete log",
       error: error.message,
     });
   }

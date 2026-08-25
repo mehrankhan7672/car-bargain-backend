@@ -1,8 +1,8 @@
 // src/controllers/car/CarController.js
 
-import mongoose from 'mongoose';
-import Car from '../../models/Car.js';
-import { createLog } from '../../utils/logger.js';
+import mongoose from "mongoose";
+import Car from "../../models/Car.js";
+import { createLog } from "../../utils/logger.js";
 
 // ==================================================
 // Validate CP / NCP fields
@@ -11,28 +11,19 @@ import { createLog } from '../../utils/logger.js';
 const validateCarTypeFields = (data) => {
   const carType = data.carType;
 
-  if (carType === 'CP (Custom Paid)') {
-    if (
-      !data.registrationCity ||
-      !String(data.registrationCity).trim()
-    ) {
-      return 'Registration city is required for a registered (CP) car';
+  if (carType === "CP (Custom Paid)") {
+    if (!data.registrationCity || !String(data.registrationCity).trim()) {
+      return "Registration city is required for a registered (CP) car";
     }
 
-    if (
-      !data.registrationNumber ||
-      !String(data.registrationNumber).trim()
-    ) {
-      return 'Registration number is required for a registered (CP) car';
+    if (!data.registrationNumber || !String(data.registrationNumber).trim()) {
+      return "Registration number is required for a registered (CP) car";
     }
   }
 
-  if (carType === 'NCP (Non-Custom Paid)') {
-    if (
-      !data.localNumber ||
-      !String(data.localNumber).trim()
-    ) {
-      return 'Local number is required for a non-custom-paid (NCP) car';
+  if (carType === "NCP (Non-Custom Paid)") {
+    if (!data.localNumber || !String(data.localNumber).trim()) {
+      return "Local number is required for a non-custom-paid (NCP) car";
     }
   }
 
@@ -44,11 +35,11 @@ const validateCarTypeFields = (data) => {
 // ==================================================
 
 const stripInapplicableCarTypeFields = (data) => {
-  if (data.carType === 'CP (Custom Paid)') {
+  if (data.carType === "CP (Custom Paid)") {
     delete data.localNumber;
   }
 
-  if (data.carType === 'NCP (Non-Custom Paid)') {
+  if (data.carType === "NCP (Non-Custom Paid)") {
     delete data.registrationCity;
     delete data.registrationNumber;
   }
@@ -60,7 +51,7 @@ const stripInapplicableCarTypeFields = (data) => {
 
 const validateExchangeCarId = async (data, userId) => {
   // Direct purchase doesn't need exchange car
-  if (data.transactionType !== 'Exchange with Bargain') {
+  if (data.transactionType !== "Exchange with Bargain") {
     delete data.exchangeCarId;
     delete data.exchangeCarDetails;
     delete data.exchangeType;
@@ -72,25 +63,27 @@ const validateExchangeCarId = async (data, userId) => {
 
   // Exchange transaction requires exchange car
   if (!data.exchangeCarId) {
-    return 'Exchange car ID is required for an exchange transaction';
+    return "Exchange car ID is required for an exchange transaction";
   }
 
   // Check MongoDB ObjectId
   if (!mongoose.Types.ObjectId.isValid(data.exchangeCarId)) {
-    return 'Invalid exchange car ID';
+    return "Invalid exchange car ID";
   }
 
   // Don't allow a car to exchange with itself
   if (data._id && String(data._id) === String(data.exchangeCarId)) {
-    return 'A car cannot be exchanged with itself';
+    return "A car cannot be exchanged with itself";
   }
 
   // Check that exchange car exists AND belongs to this same user
-  const exchangeCar = await Car.findOne({ _id: data.exchangeCarId, userId })
-    .select('_id company model year');
+  const exchangeCar = await Car.findOne({
+    _id: data.exchangeCarId,
+    userId,
+  }).select("_id company model year");
 
   if (!exchangeCar) {
-    return 'Exchange car not found';
+    return "Exchange car not found";
   }
 
   return null;
@@ -102,16 +95,15 @@ const validateExchangeCarId = async (data, userId) => {
 
 export const createCar = async (req, res) => {
   try {
-    console.log('📥 Request body:', req.body);
-    console.log('📥 Request files:', req.files);
+    console.log("📥 Request body:", req.body);
+    console.log("📥 Request files:", req.files);
 
     const carData = req.body;
 
     if (!carData || Object.keys(carData).length === 0) {
       return res.status(400).json({
         success: false,
-        message:
-          'No data received. Please check your form submission.',
+        message: "No data received. Please check your form submission.",
       });
     }
 
@@ -134,8 +126,7 @@ export const createCar = async (req, res) => {
     // Exchange car validation
     // ----------------------------------------------
 
-    const exchangeCarError =
-      await validateExchangeCarId(carData, req.userId);
+    const exchangeCarError = await validateExchangeCarId(carData, req.userId);
 
     if (exchangeCarError) {
       return res.status(400).json({
@@ -149,20 +140,15 @@ export const createCar = async (req, res) => {
     // ----------------------------------------------
 
     const exchangeType = carData.exchangeType;
-    const exchangeMoneyAmount =
-      carData.exchangeMoneyAmount;
+    const exchangeMoneyAmount = carData.exchangeMoneyAmount;
 
     if (
-      exchangeType === 'Car + Money' &&
-      (
-        !exchangeMoneyAmount ||
-        Number(exchangeMoneyAmount) <= 0
-      )
+      exchangeType === "Car + Money" &&
+      (!exchangeMoneyAmount || Number(exchangeMoneyAmount) <= 0)
     ) {
       return res.status(400).json({
         success: false,
-        message:
-          'Money amount is required when exchange type is "Car + Money"',
+        message: 'Money amount is required when exchange type is "Car + Money"',
       });
     }
 
@@ -172,7 +158,7 @@ export const createCar = async (req, res) => {
 
     if (req.files && req.files.length > 0) {
       carData.images = req.files.map(
-        (file) => `/uploads/cars/${file.filename}`
+        (file) => `/uploads/cars/${file.filename}`,
       );
     }
 
@@ -181,21 +167,21 @@ export const createCar = async (req, res) => {
     // ----------------------------------------------
 
     const numberFields = [
-      'year',
-      'mileage',
-      'engineCC',
-      'purchasePrice',
-      'salePrice',
-      'expectedPrice',
-      'exchangeAdditionalAmount',
-      'exchangeMoneyAmount',
+      "year",
+      "mileage",
+      "engineCC",
+      "purchasePrice",
+      "salePrice",
+      "expectedPrice",
+      "exchangeAdditionalAmount",
+      "exchangeMoneyAmount",
     ];
 
     numberFields.forEach((field) => {
       if (
         carData[field] !== undefined &&
         carData[field] !== null &&
-        carData[field] !== ''
+        carData[field] !== ""
       ) {
         carData[field] = Number(carData[field]);
       }
@@ -209,10 +195,7 @@ export const createCar = async (req, res) => {
     // client-supplied userId.
     carData.userId = req.userId;
 
-    console.log(
-      '📦 Processed car data:',
-      carData
-    );
+    console.log("📦 Processed car data:", carData);
 
     const car = new Car(carData);
 
@@ -223,19 +206,19 @@ export const createCar = async (req, res) => {
     // ----------------------------------------------
 
     await car.populate({
-      path: 'exchangeCarId',
+      path: "exchangeCarId",
       select:
-        'company model variant year registrationNumber localNumber color salePrice status images',
+        "company model variant year registrationNumber localNumber color salePrice status images",
     });
 
     await createLog({
       userId: req.userId,
-      category: 'Car',
-      action: 'Created',
+      category: "Car",
+      action: "Created",
       title: `Car added: ${car.company} ${car.model} (${car.year})`,
       description: `Added by ${car.userName} · Status: ${car.status}`,
       refId: car._id,
-      refModel: 'Car',
+      refModel: "Car",
       amount: car.salePrice || null,
       performedBy: req.user.name,
       performedByUserId: req.user._id,
@@ -243,57 +226,45 @@ export const createCar = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Car added successfully',
+      message: "Car added successfully",
       data: car,
     });
-
   } catch (error) {
-
-    console.error(
-      'Error creating car:',
-      error
-    );
+    console.error("Error creating car:", error);
 
     // Duplicate
     if (error.code === 11000) {
-      const field =
-        Object.keys(error.keyPattern)[0];
+      const field = Object.keys(error.keyPattern)[0];
 
       return res.status(400).json({
         success: false,
-        message:
-          `Duplicate ${field}. Please use a unique value.`,
+        message: `Duplicate ${field}. Please use a unique value.`,
       });
     }
 
     // Validation
-    if (error.name === 'ValidationError') {
-      const errors =
-        Object.values(error.errors)
-          .map((err) => err.message);
+    if (error.name === "ValidationError") {
+      const errors = Object.values(error.errors).map((err) => err.message);
 
       return res.status(400).json({
         success: false,
-        message: 'Validation error',
+        message: "Validation error",
         errors,
       });
     }
 
     // Invalid ObjectId
-    if (error.name === 'CastError') {
+    if (error.name === "CastError") {
       return res.status(400).json({
         success: false,
-        message: 'Invalid car ID format',
+        message: "Invalid car ID format",
       });
     }
 
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
-      error:
-        process.env.NODE_ENV === 'development'
-          ? error.message
-          : undefined,
+      message: "Internal server error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -307,7 +278,7 @@ export const getAllCars = async (req, res) => {
     const {
       page = 1,
       limit = 10,
-      sort = '-dateAdded',
+      sort = "-dateAdded",
       status,
       company,
       model,
@@ -327,7 +298,7 @@ export const getAllCars = async (req, res) => {
     if (model) {
       filter.model = {
         $regex: model,
-        $options: 'i',
+        $options: "i",
       };
     }
 
@@ -360,37 +331,37 @@ export const getAllCars = async (req, res) => {
         {
           company: {
             $regex: search,
-            $options: 'i',
+            $options: "i",
           },
         },
         {
           model: {
             $regex: search,
-            $options: 'i',
+            $options: "i",
           },
         },
         {
           registrationNumber: {
             $regex: search,
-            $options: 'i',
+            $options: "i",
           },
         },
         {
           userName: {
             $regex: search,
-            $options: 'i',
+            $options: "i",
           },
         },
         {
           userPhone: {
             $regex: search,
-            $options: 'i',
+            $options: "i",
           },
         },
         {
           dealerName: {
             $regex: search,
-            $options: 'i',
+            $options: "i",
           },
         },
       ];
@@ -398,58 +369,48 @@ export const getAllCars = async (req, res) => {
 
     const pageNumber = parseInt(page);
     const limitNumber = parseInt(limit);
-    const skip =
-      (pageNumber - 1) * limitNumber;
+    const skip = (pageNumber - 1) * limitNumber;
 
     const listFields =
-      'company model variant year userName userPhone userAddress ' +
-      'registrationNumber localNumber carType color condition ' +
-      'engineNumber chassisNumber engineCC ' +
-      'salePrice status dateAdded images dealerName dealerId ' +
-      'transactionType exchangeCarId exchangeCarDetails ' +
-      'exchangeType exchangeMoneyAmount exchangeAdditionalAmount';
+      "company model variant year userName userPhone userAddress " +
+      "registrationNumber localNumber carType color condition " +
+      "engineNumber chassisNumber engineCC " +
+      "salePrice status dateAdded images dealerName dealerId " +
+      "transactionType exchangeCarId exchangeCarDetails " +
+      "exchangeType exchangeMoneyAmount exchangeAdditionalAmount";
 
-    const [cars, totalCount] =
-      await Promise.all([
-        Car.find(filter)
-          .select(listFields)
-          .populate({
-            path: 'exchangeCarId',
-            select:
-              'company model variant year registrationNumber localNumber color salePrice status',
-          })
-          .sort(sort)
-          .skip(skip)
-          .limit(limitNumber)
-          .lean(),
+    const [cars, totalCount] = await Promise.all([
+      Car.find(filter)
+        .select(listFields)
+        .populate({
+          path: "exchangeCarId",
+          select:
+            "company model variant year registrationNumber localNumber color salePrice status",
+        })
+        .sort(sort)
+        .skip(skip)
+        .limit(limitNumber)
+        .lean(),
 
-        Car.countDocuments(filter),
-      ]);
+      Car.countDocuments(filter),
+    ]);
 
     res.status(200).json({
       success: true,
       data: cars,
       pagination: {
         currentPage: pageNumber,
-        totalPages:
-          Math.ceil(
-            totalCount / limitNumber
-          ),
+        totalPages: Math.ceil(totalCount / limitNumber),
         totalItems: totalCount,
         itemsPerPage: limitNumber,
       },
     });
-
   } catch (error) {
-
-    console.error(
-      'Error fetching cars:',
-      error
-    );
+    console.error("Error fetching cars:", error);
 
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
+      message: "Internal server error",
     });
   }
 };
@@ -462,17 +423,16 @@ export const getCarById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const car = await Car.findOne({ _id: id, userId: req.userId })
-      .populate({
-        path: 'exchangeCarId',
-        select:
-          'company model variant year registrationNumber localNumber color mileage engineCC fuelType transmission condition chassisNumber engineNumber carType salePrice images status',
-      });
+    const car = await Car.findOne({ _id: id, userId: req.userId }).populate({
+      path: "exchangeCarId",
+      select:
+        "company model variant year registrationNumber localNumber color mileage engineCC fuelType transmission condition chassisNumber engineNumber carType salePrice images status",
+    });
 
     if (!car) {
       return res.status(404).json({
         success: false,
-        message: 'Car not found',
+        message: "Car not found",
       });
     }
 
@@ -480,24 +440,19 @@ export const getCarById = async (req, res) => {
       success: true,
       data: car,
     });
-
   } catch (error) {
+    console.error("Error fetching car:", error);
 
-    console.error(
-      'Error fetching car:',
-      error
-    );
-
-    if (error.name === 'CastError') {
+    if (error.name === "CastError") {
       return res.status(400).json({
         success: false,
-        message: 'Invalid car ID format',
+        message: "Invalid car ID format",
       });
     }
 
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
+      message: "Internal server error",
     });
   }
 };
@@ -511,29 +466,16 @@ export const updateCar = async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
 
-    console.log(
-      '📥 Updating car with ID:',
-      id
-    );
+    console.log("📥 Updating car with ID:", id);
 
-    console.log(
-      '📥 Update data:',
-      updateData
-    );
+    console.log("📥 Update data:", updateData);
 
-    console.log(
-      '📥 New files:',
-      req.files
-    );
+    console.log("📥 New files:", req.files);
 
-    if (
-      !updateData ||
-      Object.keys(updateData).length === 0
-    ) {
+    if (!updateData || Object.keys(updateData).length === 0) {
       return res.status(400).json({
         success: false,
-        message:
-          'No update data received. Please check your form submission.',
+        message: "No update data received. Please check your form submission.",
       });
     }
 
@@ -541,13 +483,12 @@ export const updateCar = async (req, res) => {
     // Check current car exists
     // ----------------------------------------------
 
-    const existingCar =
-      await Car.findOne({ _id: id, userId: req.userId });
+    const existingCar = await Car.findOne({ _id: id, userId: req.userId });
 
     if (!existingCar) {
       return res.status(404).json({
         success: false,
-        message: 'Car not found',
+        message: "Car not found",
       });
     }
 
@@ -555,8 +496,7 @@ export const updateCar = async (req, res) => {
     // Car type validation
     // ----------------------------------------------
 
-    const carTypeError =
-      validateCarTypeFields(updateData);
+    const carTypeError = validateCarTypeFields(updateData);
 
     if (carTypeError) {
       return res.status(400).json({
@@ -565,9 +505,7 @@ export const updateCar = async (req, res) => {
       });
     }
 
-    stripInapplicableCarTypeFields(
-      updateData
-    );
+    stripInapplicableCarTypeFields(updateData);
 
     // ----------------------------------------------
     // Exchange car validation
@@ -575,11 +513,10 @@ export const updateCar = async (req, res) => {
 
     updateData._id = id;
 
-    const exchangeCarError =
-      await validateExchangeCarId(
-        updateData,
-        req.userId
-      );
+    const exchangeCarError = await validateExchangeCarId(
+      updateData,
+      req.userId,
+    );
 
     if (exchangeCarError) {
       return res.status(400).json({
@@ -595,17 +532,13 @@ export const updateCar = async (req, res) => {
     // ----------------------------------------------
 
     if (
-      updateData.exchangeType ===
-        'Car + Money' &&
-      (
-        !updateData.exchangeMoneyAmount ||
-        Number(updateData.exchangeMoneyAmount) <= 0
-      )
+      updateData.exchangeType === "Car + Money" &&
+      (!updateData.exchangeMoneyAmount ||
+        Number(updateData.exchangeMoneyAmount) <= 0)
     ) {
       return res.status(400).json({
         success: false,
-        message:
-          'Money amount is required when exchange type is "Car + Money"',
+        message: 'Money amount is required when exchange type is "Car + Money"',
       });
     }
 
@@ -613,32 +546,19 @@ export const updateCar = async (req, res) => {
     // Images
     // ----------------------------------------------
 
-    const existingImagesFromBody =
-      updateData.images
-        ? (
-            Array.isArray(updateData.images)
-              ? updateData.images
-              : [updateData.images]
-          )
-        : null;
+    const existingImagesFromBody = updateData.images
+      ? Array.isArray(updateData.images)
+        ? updateData.images
+        : [updateData.images]
+      : null;
 
     const newImagePaths =
-      req.files &&
-      req.files.length > 0
-        ? req.files.map(
-            (file) =>
-              `/uploads/cars/${file.filename}`
-          )
+      req.files && req.files.length > 0
+        ? req.files.map((file) => `/uploads/cars/${file.filename}`)
         : [];
 
-    if (
-      existingImagesFromBody !== null ||
-      newImagePaths.length > 0
-    ) {
-      updateData.images = [
-        ...(existingImagesFromBody || []),
-        ...newImagePaths,
-      ];
+    if (existingImagesFromBody !== null || newImagePaths.length > 0) {
+      updateData.images = [...(existingImagesFromBody || []), ...newImagePaths];
     } else {
       delete updateData.images;
     }
@@ -648,24 +568,23 @@ export const updateCar = async (req, res) => {
     // ----------------------------------------------
 
     const numberFields = [
-      'year',
-      'mileage',
-      'engineCC',
-      'purchasePrice',
-      'salePrice',
-      'expectedPrice',
-      'exchangeAdditionalAmount',
-      'exchangeMoneyAmount',
+      "year",
+      "mileage",
+      "engineCC",
+      "purchasePrice",
+      "salePrice",
+      "expectedPrice",
+      "exchangeAdditionalAmount",
+      "exchangeMoneyAmount",
     ];
 
     numberFields.forEach((field) => {
       if (
         updateData[field] !== undefined &&
         updateData[field] !== null &&
-        updateData[field] !== ''
+        updateData[field] !== ""
       ) {
-        updateData[field] =
-          Number(updateData[field]);
+        updateData[field] = Number(updateData[field]);
       }
     });
 
@@ -684,14 +603,14 @@ export const updateCar = async (req, res) => {
     const unsetFields = {};
 
     const unsettable = [
-      'registrationCity',
-      'registrationNumber',
-      'localNumber',
+      "registrationCity",
+      "registrationNumber",
+      "localNumber",
     ];
 
     unsettable.forEach((field) => {
       if (!(field in updateData)) {
-        unsetFields[field] = '';
+        unsetFields[field] = "";
       }
     });
 
@@ -706,55 +625,45 @@ export const updateCar = async (req, res) => {
       },
     };
 
-    if (
-      Object.keys(unsetFields).length > 0
-    ) {
+    if (Object.keys(unsetFields).length > 0) {
       updateOps.$unset = unsetFields;
     }
 
-    console.log(
-      '📝 About to write:',
-      JSON.stringify(
-        updateOps,
-        null,
-        2
-      )
-    );
+    console.log("📝 About to write:", JSON.stringify(updateOps, null, 2));
 
     // ----------------------------------------------
     // Update
     // ----------------------------------------------
 
-    const car =
-      await Car.findOneAndUpdate(
-        { _id: id, userId: req.userId },
-        updateOps,
-        {
-          new: true,
-          runValidators: true,
-          context: 'query',
-        }
-      ).populate({
-        path: 'exchangeCarId',
-        select:
-          'company model variant year registrationNumber localNumber color salePrice status images',
-      });
+    const car = await Car.findOneAndUpdate(
+      { _id: id, userId: req.userId },
+      updateOps,
+      {
+        new: true,
+        runValidators: true,
+        context: "query",
+      },
+    ).populate({
+      path: "exchangeCarId",
+      select:
+        "company model variant year registrationNumber localNumber color salePrice status images",
+    });
 
     if (!car) {
       return res.status(404).json({
         success: false,
-        message: 'Car not found',
+        message: "Car not found",
       });
     }
 
     await createLog({
       userId: req.userId,
-      category: 'Car',
-      action: 'Status Changed',
+      category: "Car",
+      action: "Status Changed",
       title: `Car updated: ${car.company} ${car.model} (${car.year})`,
       description: `Status: ${car.status}`,
       refId: car._id,
-      refModel: 'Car',
+      refModel: "Car",
       amount: car.salePrice || null,
       performedBy: req.user.name,
       performedByUserId: req.user._id,
@@ -762,77 +671,52 @@ export const updateCar = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Car updated successfully',
+      message: "Car updated successfully",
       data: car,
     });
-
   } catch (error) {
-
-    console.error(
-      'Error updating car:',
-      error
-    );
+    console.error("Error updating car:", error);
 
     if (error.code === 11000) {
-      const field =
-        Object.keys(error.keyPattern)[0];
+      const field = Object.keys(error.keyPattern)[0];
 
       let fieldName = field;
 
-      if (
-        field === 'registrationNumber'
-      ) {
-        fieldName =
-          'Registration number';
-      } else if (
-        field === 'chassisNumber'
-      ) {
-        fieldName =
-          'Chassis number';
-      } else if (
-        field === 'engineNumber'
-      ) {
-        fieldName =
-          'Engine number';
+      if (field === "registrationNumber") {
+        fieldName = "Registration number";
+      } else if (field === "chassisNumber") {
+        fieldName = "Chassis number";
+      } else if (field === "engineNumber") {
+        fieldName = "Engine number";
       }
 
       return res.status(400).json({
         success: false,
-        message:
-          `${fieldName} is already taken by another car. Please use a unique value.`,
+        message: `${fieldName} is already taken by another car. Please use a unique value.`,
       });
     }
 
-    if (
-      error.name === 'ValidationError'
-    ) {
-      const errors =
-        Object.values(error.errors)
-          .map((err) => err.message);
+    if (error.name === "ValidationError") {
+      const errors = Object.values(error.errors).map((err) => err.message);
 
       return res.status(400).json({
         success: false,
-        message: 'Validation error',
+        message: "Validation error",
         errors,
       });
     }
 
-    if (
-      error.name === 'CastError'
-    ) {
+    if (error.name === "CastError") {
       return res.status(400).json({
         success: false,
-        message: 'Invalid car ID format',
+        message: "Invalid car ID format",
       });
     }
 
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
-      error:
-        process.env.NODE_ENV === 'development'
-          ? error.message
-          : undefined,
+      message: "Internal server error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -845,23 +729,22 @@ export const deleteCar = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const car =
-      await Car.findOneAndDelete({ _id: id, userId: req.userId });
+    const car = await Car.findOneAndDelete({ _id: id, userId: req.userId });
 
     if (!car) {
       return res.status(404).json({
         success: false,
-        message: 'Car not found',
+        message: "Car not found",
       });
     }
 
     await createLog({
       userId: req.userId,
-      category: 'Car',
-      action: 'Deleted',
+      category: "Car",
+      action: "Deleted",
       title: `Car removed: ${car.company} ${car.model} (${car.year})`,
       refId: car._id,
-      refModel: 'Car',
+      refModel: "Car",
       amount: car.salePrice || null,
       performedBy: req.user.name,
       performedByUserId: req.user._id,
@@ -869,29 +752,22 @@ export const deleteCar = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Car deleted successfully',
+      message: "Car deleted successfully",
       data: car,
     });
-
   } catch (error) {
+    console.error("Error deleting car:", error);
 
-    console.error(
-      'Error deleting car:',
-      error
-    );
-
-    if (
-      error.name === 'CastError'
-    ) {
+    if (error.name === "CastError") {
       return res.status(400).json({
         success: false,
-        message: 'Invalid car ID format',
+        message: "Invalid car ID format",
       });
     }
 
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
+      message: "Internal server error",
     });
   }
 };
@@ -916,17 +792,17 @@ export const getCarStats = async (req, res) => {
 
       Car.countDocuments({
         ...ownerFilter,
-        status: 'Available',
+        status: "Available",
       }),
 
       Car.countDocuments({
         ...ownerFilter,
-        status: 'Sold',
+        status: "Sold",
       }),
 
       Car.countDocuments({
         ...ownerFilter,
-        status: 'Reserved',
+        status: "Reserved",
       }),
 
       Car.aggregate([
@@ -935,7 +811,7 @@ export const getCarStats = async (req, res) => {
           $group: {
             _id: null,
             total: {
-              $sum: '$salePrice',
+              $sum: "$salePrice",
             },
           },
         },
@@ -945,7 +821,7 @@ export const getCarStats = async (req, res) => {
         { $match: ownerFilter },
         {
           $group: {
-            _id: '$company',
+            _id: "$company",
             count: {
               $sum: 1,
             },
@@ -969,23 +845,16 @@ export const getCarStats = async (req, res) => {
         availableCars,
         soldCars,
         reservedCars,
-        totalValue:
-          totalValue[0]?.total || 0,
-        topCompanies:
-          companyStats,
+        totalValue: totalValue[0]?.total || 0,
+        topCompanies: companyStats,
       },
     });
-
   } catch (error) {
-
-    console.error(
-      'Error fetching car stats:',
-      error
-    );
+    console.error("Error fetching car stats:", error);
 
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
+      message: "Internal server error",
     });
   }
 };
@@ -1001,50 +870,49 @@ export const searchCarsByUser = async (req, res) => {
     if (!query) {
       return res.status(400).json({
         success: false,
-        message: 'Search query is required',
+        message: "Search query is required",
       });
     }
 
-    const cars =
-      await Car.find({
-        userId: req.userId,
-        $or: [
-          {
-            userName: {
-              $regex: query,
-              $options: 'i',
-            },
+    const cars = await Car.find({
+      userId: req.userId,
+      $or: [
+        {
+          userName: {
+            $regex: query,
+            $options: "i",
           },
-          {
-            userPhone: {
-              $regex: query,
-              $options: 'i',
-            },
+        },
+        {
+          userPhone: {
+            $regex: query,
+            $options: "i",
           },
-          {
-            userCnic: {
-              $regex: query,
-              $options: 'i',
-            },
+        },
+        {
+          userCnic: {
+            $regex: query,
+            $options: "i",
           },
-          {
-            userAddress: {
-              $regex: query,
-              $options: 'i',
-            },
+        },
+        {
+          userAddress: {
+            $regex: query,
+            $options: "i",
           },
-          {
-            dealerName: {
-              $regex: query,
-              $options: 'i',
-            },
+        },
+        {
+          dealerName: {
+            $regex: query,
+            $options: "i",
           },
-        ],
-      })
+        },
+      ],
+    })
       .populate({
-        path: 'exchangeCarId',
+        path: "exchangeCarId",
         select:
-          'company model variant year registrationNumber localNumber color salePrice status',
+          "company model variant year registrationNumber localNumber color salePrice status",
       })
       .limit(20);
 
@@ -1053,17 +921,12 @@ export const searchCarsByUser = async (req, res) => {
       data: cars,
       count: cars.length,
     });
-
   } catch (error) {
-
-    console.error(
-      'Error searching cars by user:',
-      error
-    );
+    console.error("Error searching cars by user:", error);
 
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
+      message: "Internal server error",
     });
   }
 };

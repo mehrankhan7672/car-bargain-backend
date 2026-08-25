@@ -1,5 +1,5 @@
 // src/backend/routes/salaryRoutes.js
-import express from 'express';
+import express from "express";
 import {
   getSalaries,
   getSalary,
@@ -9,8 +9,8 @@ import {
   getSalaryStats,
   getEmployeeSalaryHistory,
   getEmployeeBalance,
-} from '../controllers/employee/salaryController.js';
-import { protect } from '../middleware/authMiddleware.js';
+} from "../controllers/employee/salaryController.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -18,22 +18,14 @@ const router = express.Router();
 router.use(protect);
 
 // Routes
-router.route('/')
-  .get(getSalaries)
-  .post(createSalary);
+router.route("/").get(getSalaries).post(createSalary);
 
-router.route('/stats')
-  .get(getSalaryStats);
+router.route("/stats").get(getSalaryStats);
 
-router.route('/balance/:employeeId')
-  .get(getEmployeeBalance);
+router.route("/balance/:employeeId").get(getEmployeeBalance);
 
-router.route('/employee/:employeeId')
-  .get(getEmployeeSalaryHistory);
+router.route("/employee/:employeeId").get(getEmployeeSalaryHistory);
 
-router.route('/:id')
-  .get(getSalary)
-  .put(updateSalary)
-  .delete(deleteSalary);
+router.route("/:id").get(getSalary).put(updateSalary).delete(deleteSalary);
 
 export default router;

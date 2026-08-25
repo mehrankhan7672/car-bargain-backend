@@ -1,14 +1,13 @@
-import Dealer from '../../models/Dealer.js';
-import { createLog } from '../../utils/logger.js';
+import Dealer from "../../models/Dealer.js";
+import { createLog } from "../../utils/logger.js";
 
 // @desc    Create a new dealer
 // @route   POST /api/dealers
 // @access  Public
 export const createDealer = async (req, res) => {
   try {
-    const { name, phone, cnic, address, notes } = req.body;
+        const { name, phone, cnic, address, notes, formLanguage } = req.body;
 
-    // Check if THIS user already has a dealer with the same CNIC
     const existingDealer = await Dealer.findOne({ cnic, userId: req.userId });
     if (existingDealer) {
       return res.status(400).json({
@@ -23,17 +22,18 @@ export const createDealer = async (req, res) => {
       phone,
       cnic,
       address,
-      notes: notes || ''
+      notes: notes || '',
+      formLanguage: formLanguage === 'ur' ? 'ur' : 'en',
     });
 
-      await createLog({
+    await createLog({
       userId: req.userId,
-      category: 'Dealer',
-      action: 'Created',
+      category: "Dealer",
+      action: "Created",
       title: `Dealer added: ${dealer.name}`,
       description: `Phone: ${dealer.phone} · CNIC: ${dealer.cnic}`,
       refId: dealer._id,
-      refModel: 'Dealer',
+      refModel: "Dealer",
       performedBy: req.user.name,
       performedByUserId: req.user._id,
     });
@@ -41,27 +41,27 @@ export const createDealer = async (req, res) => {
     res.status(201).json({
       success: true,
       data: dealer,
-      message: 'Dealer created successfully'
+      message: "Dealer created successfully",
     });
   } catch (error) {
-    console.error('Create dealer error:', error);
-    
+    console.error("Create dealer error:", error);
+
     // Handle mongoose validation errors
-    if (error.name === 'ValidationError') {
-      const errors = Object.values(error.errors).map(function(err) {
+    if (error.name === "ValidationError") {
+      const errors = Object.values(error.errors).map(function (err) {
         return err.message;
       });
       return res.status(400).json({
         success: false,
-        message: 'Validation error',
-        errors: errors
+        message: "Validation error",
+        errors: errors,
       });
     }
 
     res.status(500).json({
       success: false,
-      message: 'Failed to create dealer',
-      error: error.message
+      message: "Failed to create dealer",
+      error: error.message,
     });
   }
 };
@@ -73,9 +73,9 @@ export const getDealers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const search = req.query.search || '';
-    const sortBy = req.query.sortBy || 'createdAt';
-    const sortOrder = req.query.sortOrder === 'desc' ? -1 : 1;
+    const search = req.query.search || "";
+    const sortBy = req.query.sortBy || "createdAt";
+    const sortOrder = req.query.sortOrder === "desc" ? -1 : 1;
 
     const skip = (page - 1) * limit;
 
@@ -85,11 +85,11 @@ export const getDealers = async (req, res) => {
       query = {
         userId: req.userId,
         $or: [
-          { name: { $regex: search, $options: 'i' } },
-          { phone: { $regex: search, $options: 'i' } },
-          { address: { $regex: search, $options: 'i' } },
-          { cnic: { $regex: search, $options: 'i' } }
-        ]
+          { name: { $regex: search, $options: "i" } },
+          { phone: { $regex: search, $options: "i" } },
+          { address: { $regex: search, $options: "i" } },
+          { cnic: { $regex: search, $options: "i" } },
+        ],
       };
     }
 
@@ -107,16 +107,16 @@ export const getDealers = async (req, res) => {
         page: page,
         limit: limit,
         total: total,
-        pages: Math.ceil(total / limit)
+        pages: Math.ceil(total / limit),
       },
-      message: 'Dealers retrieved successfully'
+      message: "Dealers retrieved successfully",
     });
   } catch (error) {
-    console.error('Get dealers error:', error);
+    console.error("Get dealers error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get dealers',
-      error: error.message
+      message: "Failed to get dealers",
+      error: error.message,
     });
   }
 };
@@ -132,21 +132,21 @@ export const getDealerById = async (req, res) => {
     if (!dealer) {
       return res.status(404).json({
         success: false,
-        message: 'Dealer not found'
+        message: "Dealer not found",
       });
     }
 
     res.status(200).json({
       success: true,
       data: dealer,
-      message: 'Dealer retrieved successfully'
+      message: "Dealer retrieved successfully",
     });
   } catch (error) {
-    console.error('Get dealer by ID error:', error);
+    console.error("Get dealer by ID error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get dealer',
-      error: error.message
+      message: "Failed to get dealer",
+      error: error.message,
     });
   }
 };
@@ -157,28 +157,28 @@ export const getDealerById = async (req, res) => {
 export const updateDealer = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, phone, cnic, address, notes } = req.body;
+      const { name, phone, cnic, address, notes, formLanguage } = req.body;
 
     // Check if dealer exists and belongs to this user
     const dealer = await Dealer.findOne({ _id: id, userId: req.userId });
     if (!dealer) {
       return res.status(404).json({
         success: false,
-        message: 'Dealer not found'
+        message: "Dealer not found",
       });
     }
 
     // Check for duplicate CNIC within this user's own dealers (excluding current dealer)
     if (cnic && cnic !== dealer.cnic) {
-      const existingDealer = await Dealer.findOne({ 
-        cnic: cnic, 
+      const existingDealer = await Dealer.findOne({
+        cnic: cnic,
         userId: req.userId,
-        _id: { $ne: id } 
+        _id: { $ne: id },
       });
       if (existingDealer) {
         return res.status(400).json({
           success: false,
-          message: 'Dealer with this CNIC already exists'
+          message: "Dealer with this CNIC already exists",
         });
       }
     }
@@ -191,50 +191,51 @@ export const updateDealer = async (req, res) => {
         phone: phone || dealer.phone,
         cnic: cnic || dealer.cnic,
         address: address || dealer.address,
-        notes: notes !== undefined ? notes : dealer.notes
+        notes: notes !== undefined ? notes : dealer.notes,
+        formLanguage: formLanguage === 'ur' || formLanguage === 'en' ? formLanguage : dealer.formLanguage,
       },
       {
         new: true,
-        runValidators: true
-      }
+        runValidators: true,
+      },
     );
 
-        await createLog({
-        userId: req.userId,
-        category: 'Dealer',
-        action: 'Updated',
-        title: `Dealer updated: ${updatedDealer.name}`,
-        description: `Phone: ${updatedDealer.phone} · CNIC: ${updatedDealer.cnic}`,
-        refId: updatedDealer._id,
-        refModel: 'Dealer',
-        performedBy: req.user.name,
-        performedByUserId: req.user._id,
-      });
+    await createLog({
+      userId: req.userId,
+      category: "Dealer",
+      action: "Updated",
+      title: `Dealer updated: ${updatedDealer.name}`,
+      description: `Phone: ${updatedDealer.phone} · CNIC: ${updatedDealer.cnic}`,
+      refId: updatedDealer._id,
+      refModel: "Dealer",
+      performedBy: req.user.name,
+      performedByUserId: req.user._id,
+    });
 
     res.status(200).json({
       success: true,
       data: updatedDealer,
-      message: 'Dealer updated successfully'
+      message: "Dealer updated successfully",
     });
   } catch (error) {
-    console.error('Update dealer error:', error);
-    
+    console.error("Update dealer error:", error);
+
     // Handle mongoose validation errors
-    if (error.name === 'ValidationError') {
-      const errors = Object.values(error.errors).map(function(err) {
+    if (error.name === "ValidationError") {
+      const errors = Object.values(error.errors).map(function (err) {
         return err.message;
       });
       return res.status(400).json({
         success: false,
-        message: 'Validation error',
-        errors: errors
+        message: "Validation error",
+        errors: errors,
       });
     }
 
     res.status(500).json({
       success: false,
-      message: 'Failed to update dealer',
-      error: error.message
+      message: "Failed to update dealer",
+      error: error.message,
     });
   }
 };
@@ -250,35 +251,35 @@ export const deleteDealer = async (req, res) => {
     if (!dealer) {
       return res.status(404).json({
         success: false,
-        message: 'Dealer not found'
+        message: "Dealer not found",
       });
     }
 
-      await Dealer.findOneAndDelete({ _id: id, userId: req.userId });
+    await Dealer.findOneAndDelete({ _id: id, userId: req.userId });
 
-      await createLog({
-        userId: req.userId,
-        category: 'Dealer',
-        action: 'Deleted',
-        title: `Dealer removed: ${dealer.name}`,
-        description: `Phone: ${dealer.phone} · CNIC: ${dealer.cnic}`,
-        refId: dealer._id,
-        refModel: 'Dealer',
-        performedBy: req.user.name,
-        performedByUserId: req.user._id,
-      });
+    await createLog({
+      userId: req.userId,
+      category: "Dealer",
+      action: "Deleted",
+      title: `Dealer removed: ${dealer.name}`,
+      description: `Phone: ${dealer.phone} · CNIC: ${dealer.cnic}`,
+      refId: dealer._id,
+      refModel: "Dealer",
+      performedBy: req.user.name,
+      performedByUserId: req.user._id,
+    });
 
-      res.status(200).json({
-        success: true,
-        data: {},
-        message: 'Dealer deleted successfully'
-      });
+    res.status(200).json({
+      success: true,
+      data: {},
+      message: "Dealer deleted successfully",
+    });
   } catch (error) {
-    console.error('Delete dealer error:', error);
+    console.error("Delete dealer error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to delete dealer',
-      error: error.message
+      message: "Failed to delete dealer",
+      error: error.message,
     });
   }
 };
@@ -297,16 +298,16 @@ export const getDealerStats = async (req, res) => {
       success: true,
       data: {
         totalDealers: totalDealers,
-        recentDealers: recentDealers
+        recentDealers: recentDealers,
       },
-      message: 'Dealer statistics retrieved successfully'
+      message: "Dealer statistics retrieved successfully",
     });
   } catch (error) {
-    console.error('Get dealer stats error:', error);
+    console.error("Get dealer stats error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get dealer statistics',
-      error: error.message
+      message: "Failed to get dealer statistics",
+      error: error.message,
     });
   }
 };
@@ -317,35 +318,35 @@ export const getDealerStats = async (req, res) => {
 export const searchDealers = async (req, res) => {
   try {
     const { query } = req.query;
-    
+
     if (!query) {
       return res.status(400).json({
         success: false,
-        message: 'Search query is required'
+        message: "Search query is required",
       });
     }
 
     const dealers = await Dealer.find({
       userId: req.userId,
       $or: [
-        { name: { $regex: query, $options: 'i' } },
-        { phone: { $regex: query, $options: 'i' } },
-        { address: { $regex: query, $options: 'i' } },
-        { cnic: { $regex: query, $options: 'i' } }
-      ]
+        { name: { $regex: query, $options: "i" } },
+        { phone: { $regex: query, $options: "i" } },
+        { address: { $regex: query, $options: "i" } },
+        { cnic: { $regex: query, $options: "i" } },
+      ],
     }).limit(20);
 
     res.status(200).json({
       success: true,
       data: dealers,
-      message: 'Dealers searched successfully'
+      message: "Dealers searched successfully",
     });
   } catch (error) {
-    console.error('Search dealers error:', error);
+    console.error("Search dealers error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to search dealers',
-      error: error.message
+      message: "Failed to search dealers",
+      error: error.message,
     });
   }
 };

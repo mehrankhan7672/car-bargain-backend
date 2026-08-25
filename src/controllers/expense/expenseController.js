@@ -1,6 +1,6 @@
 // src/controllers/expense/expenseController.js
-import Expense from '../../models/Expense.js';
-import { createLog } from '../../utils/logger.js';
+import Expense from "../../models/Expense.js";
+import { createLog } from "../../utils/logger.js";
 
 // @desc    Create a new expense
 // @route   POST /api/expenses
@@ -15,17 +15,17 @@ export const createExpense = async (req, res) => {
       category,
       amount,
       date: date || Date.now(),
-      notes: notes || '',
+      notes: notes || "",
     });
 
     await createLog({
       userId: req.userId,
-      category: 'Expense',
-      action: 'Created',
+      category: "Expense",
+      action: "Created",
       title: `Expense added: ${expense.title}`,
       description: `${expense.category} · PKR ${expense.amount}`,
       refId: expense._id,
-      refModel: 'Expense',
+      refModel: "Expense",
       amount: expense.amount,
       performedBy: req.user.name,
       performedByUserId: req.user._id,
@@ -34,23 +34,23 @@ export const createExpense = async (req, res) => {
     res.status(201).json({
       success: true,
       data: expense,
-      message: 'Expense added successfully',
+      message: "Expense added successfully",
     });
   } catch (error) {
-    console.error('Create expense error:', error);
+    console.error("Create expense error:", error);
 
-    if (error.name === 'ValidationError') {
+    if (error.name === "ValidationError") {
       const errors = Object.values(error.errors).map((err) => err.message);
       return res.status(400).json({
         success: false,
-        message: 'Validation error',
+        message: "Validation error",
         errors,
       });
     }
 
     res.status(500).json({
       success: false,
-      message: 'Failed to create expense',
+      message: "Failed to create expense",
       error: error.message,
     });
   }
@@ -64,7 +64,7 @@ export const getExpenses = async (req, res) => {
     // Parse query parameters with defaults
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.max(1, parseInt(req.query.limit) || 500);
-    const search = (req.query.search || '').trim();
+    const search = (req.query.search || "").trim();
     const category = req.query.category;
     const startDate = req.query.startDate;
     const endDate = req.query.endDate;
@@ -74,7 +74,7 @@ export const getExpenses = async (req, res) => {
     // Build the filter
     const filter = { userId: req.userId };
 
-    if (category && category !== 'All') {
+    if (category && category !== "All") {
       filter.category = category;
     }
 
@@ -88,19 +88,19 @@ export const getExpenses = async (req, res) => {
     // Search across title, notes, and category (case‑insensitive)
     if (search) {
       filter.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { notes: { $regex: search, $options: 'i' } },
-        { category: { $regex: search, $options: 'i' } },
+        { title: { $regex: search, $options: "i" } },
+        { notes: { $regex: search, $options: "i" } },
+        { category: { $regex: search, $options: "i" } },
       ];
     }
 
     // Execute queries in parallel
     const [expenses, total] = await Promise.all([
       Expense.find(filter)
-        .sort({ date: -1 })      // newest first
+        .sort({ date: -1 }) // newest first
         .skip(skip)
         .limit(limit)
-        .lean(),                // return plain JS objects (slightly faster)
+        .lean(), // return plain JS objects (slightly faster)
       Expense.countDocuments(filter),
     ]);
 
@@ -114,13 +114,13 @@ export const getExpenses = async (req, res) => {
         total,
         pages: Math.ceil(total / limit),
       },
-      message: 'Expenses retrieved successfully',
+      message: "Expenses retrieved successfully",
     });
   } catch (error) {
-    console.error('Get expenses error:', error);
+    console.error("Get expenses error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get expenses',
+      message: "Failed to get expenses",
       error: error.message,
     });
   }
@@ -135,22 +135,26 @@ export const getExpenseById = async (req, res) => {
 
     const expense = await Expense.findOne({ _id: id, userId: req.userId });
     if (!expense) {
-      return res.status(404).json({ success: false, message: 'Expense not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Expense not found" });
     }
 
     res.status(200).json({
       success: true,
       data: expense,
-      message: 'Expense retrieved successfully',
+      message: "Expense retrieved successfully",
     });
   } catch (error) {
-    console.error('Get expense by ID error:', error);
-    if (error.name === 'CastError') {
-      return res.status(400).json({ success: false, message: 'Invalid expense ID' });
+    console.error("Get expense by ID error:", error);
+    if (error.name === "CastError") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid expense ID" });
     }
     res.status(500).json({
       success: false,
-      message: 'Failed to get expense',
+      message: "Failed to get expense",
       error: error.message,
     });
   }
@@ -166,7 +170,9 @@ export const updateExpense = async (req, res) => {
 
     const expense = await Expense.findOne({ _id: id, userId: req.userId });
     if (!expense) {
-      return res.status(404).json({ success: false, message: 'Expense not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Expense not found" });
     }
 
     if (title !== undefined) expense.title = title;
@@ -179,12 +185,12 @@ export const updateExpense = async (req, res) => {
 
     await createLog({
       userId: req.userId,
-      category: 'Expense',
-      action: 'Updated',
+      category: "Expense",
+      action: "Updated",
       title: `Expense updated: ${expense.title}`,
       description: `${expense.category} · PKR ${expense.amount}`,
       refId: expense._id,
-      refModel: 'Expense',
+      refModel: "Expense",
       amount: expense.amount,
       performedBy: req.user.name,
       performedByUserId: req.user._id,
@@ -193,23 +199,23 @@ export const updateExpense = async (req, res) => {
     res.status(200).json({
       success: true,
       data: expense,
-      message: 'Expense updated successfully',
+      message: "Expense updated successfully",
     });
   } catch (error) {
-    console.error('Update expense error:', error);
+    console.error("Update expense error:", error);
 
-    if (error.name === 'ValidationError') {
+    if (error.name === "ValidationError") {
       const errors = Object.values(error.errors).map((err) => err.message);
       return res.status(400).json({
         success: false,
-        message: 'Validation error',
+        message: "Validation error",
         errors,
       });
     }
 
     res.status(500).json({
       success: false,
-      message: 'Failed to update expense',
+      message: "Failed to update expense",
       error: error.message,
     });
   }
@@ -222,18 +228,23 @@ export const deleteExpense = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const expense = await Expense.findOneAndDelete({ _id: id, userId: req.userId });
+    const expense = await Expense.findOneAndDelete({
+      _id: id,
+      userId: req.userId,
+    });
     if (!expense) {
-      return res.status(404).json({ success: false, message: 'Expense not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Expense not found" });
     }
 
     await createLog({
       userId: req.userId,
-      category: 'Expense',
-      action: 'Deleted',
+      category: "Expense",
+      action: "Deleted",
       title: `Expense removed: ${expense.title}`,
       refId: expense._id,
-      refModel: 'Expense',
+      refModel: "Expense",
       amount: expense.amount,
       performedBy: req.user.name,
       performedByUserId: req.user._id,
@@ -242,13 +253,13 @@ export const deleteExpense = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {},
-      message: 'Expense deleted successfully',
+      message: "Expense deleted successfully",
     });
   } catch (error) {
-    console.error('Delete expense error:', error);
+    console.error("Delete expense error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to delete expense',
+      message: "Failed to delete expense",
       error: error.message,
     });
   }
@@ -264,12 +275,18 @@ export const getExpenseStats = async (req, res) => {
     const [totalAgg, count, byCategory] = await Promise.all([
       Expense.aggregate([
         { $match: ownerFilter },
-        { $group: { _id: null, total: { $sum: '$amount' } } },
+        { $group: { _id: null, total: { $sum: "$amount" } } },
       ]),
       Expense.countDocuments(ownerFilter),
       Expense.aggregate([
         { $match: ownerFilter },
-        { $group: { _id: '$category', total: { $sum: '$amount' }, count: { $sum: 1 } } },
+        {
+          $group: {
+            _id: "$category",
+            total: { $sum: "$amount" },
+            count: { $sum: 1 },
+          },
+        },
         { $sort: { total: -1 } },
       ]),
     ]);
@@ -281,13 +298,13 @@ export const getExpenseStats = async (req, res) => {
         totalEntries: count,
         byCategory,
       },
-      message: 'Expense statistics retrieved successfully',
+      message: "Expense statistics retrieved successfully",
     });
   } catch (error) {
-    console.error('Get expense stats error:', error);
+    console.error("Get expense stats error:", error);
     res.status(500).json({
       success: false,
-      message: 'Failed to get expense statistics',
+      message: "Failed to get expense statistics",
       error: error.message,
     });
   }

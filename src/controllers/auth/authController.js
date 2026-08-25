@@ -31,11 +31,21 @@ const storage = new CloudinaryStorage({
 
 const fileFilter = (req, file, cb) => {
   console.log("File type:", file.mimetype);
-  const allowedTypes = ["image/jpeg", "image/png", "image/svg+xml", "image/webp"];
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/svg+xml",
+    "image/webp",
+  ];
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error("Invalid file type. Only JPEG, PNG, SVG, and WebP are allowed."), false);
+    cb(
+      new Error(
+        "Invalid file type. Only JPEG, PNG, SVG, and WebP are allowed.",
+      ),
+      false,
+    );
   }
 };
 
@@ -48,7 +58,7 @@ export const upload = multer({
 // Generate JWT Token (Only used at login)
 const generateToken = (user) => {
   return jwt.sign(
-    { 
+    {
       id: user._id,
       email: user.email,
       name: user.name,
@@ -56,7 +66,7 @@ const generateToken = (user) => {
       role: user.role,
     },
     process.env.JWT_SECRET || "your-secret-key-change-this-in-production",
-    { expiresIn: "7d" }
+    { expiresIn: "7d" },
   );
 };
 
@@ -65,7 +75,7 @@ export const register = async (req, res) => {
   console.log("=== REGISTRATION STARTED ===");
   console.log("Request body:", req.body);
   console.log("Request file:", req.file);
-  
+
   try {
     const { name, email, password, bargainName } = req.body;
     const logoFile = req.file;
@@ -104,18 +114,22 @@ export const register = async (req, res) => {
       console.log("User already exists:", email);
       return res.status(400).json({
         success: false,
-        message: "Email already registered. Please use a different email or login.",
+        message:
+          "Email already registered. Please use a different email or login.",
       });
     }
 
     // HASH PASSWORD IN CONTROLLER (Not in model)
     console.log("Original password:", password);
     console.log("Original password length:", password.length);
-    
+
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     console.log("Hashed password:", hashedPassword);
-    console.log("Is hashed?", hashedPassword.startsWith('$2a$') || hashedPassword.startsWith('$2b$'));
+    console.log(
+      "Is hashed?",
+      hashedPassword.startsWith("$2a$") || hashedPassword.startsWith("$2b$"),
+    );
 
     // Create user with hashed password
     const user = new User({
@@ -132,15 +146,19 @@ export const register = async (req, res) => {
     console.log("User created successfully:", user.email);
 
     // Verify password is hashed (for debugging)
-    const savedUser = await User.findOne({ email }).select('+password');
+    const savedUser = await User.findOne({ email }).select("+password");
     console.log("Stored password in DB:", savedUser.password);
-    console.log("Is password hashed?", savedUser.password.startsWith('$2a$') || savedUser.password.startsWith('$2b$'));
+    console.log(
+      "Is password hashed?",
+      savedUser.password.startsWith("$2a$") ||
+        savedUser.password.startsWith("$2b$"),
+    );
 
     // Get public profile (excludes password)
     const userPublic = user.getPublicProfile();
 
     console.log("=== REGISTRATION COMPLETED SUCCESSFULLY ===");
-    
+
     // Return success WITHOUT token - User must login to get token
     res.status(201).json({
       success: true,
@@ -150,16 +168,16 @@ export const register = async (req, res) => {
   } catch (error) {
     console.error("=== REGISTRATION ERROR ===");
     console.error(error);
-    
+
     // Handle Mongoose validation errors
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map(e => e.message);
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((e) => e.message);
       return res.status(400).json({
         success: false,
-        message: messages.join(', '),
+        message: messages.join(", "),
       });
     }
-    
+
     // Handle duplicate key error
     if (error.code === 11000) {
       const field = Object.keys(error.keyPattern)[0];
@@ -168,7 +186,7 @@ export const register = async (req, res) => {
         message: `${field} already exists`,
       });
     }
-    
+
     res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -181,7 +199,7 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   console.log("=== LOGIN STARTED ===");
   console.log("Login attempt:", { email: req.body.email });
-  
+
   try {
     const { email, password } = req.body;
 
@@ -193,8 +211,8 @@ export const login = async (req, res) => {
     }
 
     // Find user with password field included
-    const user = await User.findOne({ email }).select('+password');
-    
+    const user = await User.findOne({ email }).select("+password");
+
     // Check if user exists
     if (!user) {
       console.log("User not found:", email);
@@ -206,7 +224,10 @@ export const login = async (req, res) => {
 
     // Debug: Check stored password format
     console.log("Stored password (hashed):", user.password);
-    console.log("Is password hashed?", user.password.startsWith('$2a$') || user.password.startsWith('$2b$'));
+    console.log(
+      "Is password hashed?",
+      user.password.startsWith("$2a$") || user.password.startsWith("$2b$"),
+    );
 
     // Check if user account is active
     if (!user.isActive) {
@@ -221,10 +242,10 @@ export const login = async (req, res) => {
     console.log("Comparing passwords in controller...");
     console.log("Input password:", password);
     console.log("Stored hash:", user.password);
-    
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     console.log("Password comparison result:", isPasswordValid);
-    
+
     if (!isPasswordValid) {
       console.log("Invalid password for user:", email);
       return res.status(401).json({
@@ -285,7 +306,7 @@ export const getMe = async (req, res) => {
 // Get all users (for testing)
 export const getUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-password').sort({ createdAt: -1 });
+    const users = await User.find().select("-password").sort({ createdAt: -1 });
     res.status(200).json({
       success: true,
       count: users.length,
@@ -304,8 +325,8 @@ export const getUsers = async (req, res) => {
 export const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await User.findById(id).select('-password');
-    
+    const user = await User.findById(id).select("-password");
+
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -333,13 +354,13 @@ export const addStaff = async (req, res) => {
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Name, email and password are required',
+        message: "Name, email and password are required",
       });
     }
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
-        message: 'Password must be at least 6 characters',
+        message: "Password must be at least 6 characters",
       });
     }
 
@@ -348,7 +369,7 @@ export const addStaff = async (req, res) => {
     if (existing) {
       return res.status(400).json({
         success: false,
-        message: 'A user with this email already exists',
+        message: "A user with this email already exists",
       });
     }
 
@@ -356,11 +377,11 @@ export const addStaff = async (req, res) => {
     const ownerId = req.user.tenantId || req.user._id;
 
     // Fetch the owner to get their bargainName
-    const owner = await User.findById(ownerId).select('bargainName');
+    const owner = await User.findById(ownerId).select("bargainName");
     if (!owner) {
       return res.status(404).json({
         success: false,
-        message: 'Owner not found',
+        message: "Owner not found",
       });
     }
 
@@ -372,11 +393,16 @@ export const addStaff = async (req, res) => {
     const staffUser = new User({
       name,
       email,
-      password: hashedPassword,        // ✅ explicitly hashed
-      role: 'staff',
+      password: hashedPassword, // ✅ explicitly hashed
+      role: "staff",
       tenantId: ownerId,
       bargainName: owner.bargainName,
-      permissions: permissions || { canView: true, canAdd: true, canEdit: true, canDelete: false },
+      permissions: permissions || {
+        canView: true,
+        canAdd: true,
+        canEdit: true,
+        canDelete: false,
+      },
       isActive: true,
     });
 
@@ -388,15 +414,15 @@ export const addStaff = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Staff account created successfully',
+      message: "Staff account created successfully",
       user: userResponse,
     });
   } catch (error) {
-    console.error('Add staff error:', error);
+    console.error("Add staff error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error while creating staff account',
-      details: error.message,   // remove in production after debugging
+      message: "Server error while creating staff account",
+      details: error.message, // remove in production after debugging
     });
   }
 };
@@ -435,7 +461,11 @@ export const updateStaff = async (req, res) => {
     const { id } = req.params;
     const { name, email, permissions } = req.body;
 
-    const staffUser = await User.findOne({ _id: id, role: "staff", tenantId: ownerId });
+    const staffUser = await User.findOne({
+      _id: id,
+      role: "staff",
+      tenantId: ownerId,
+    });
 
     if (!staffUser) {
       return res.status(404).json({
@@ -447,17 +477,25 @@ export const updateStaff = async (req, res) => {
     if (email && email !== staffUser.email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        return res.status(400).json({ success: false, message: "Invalid email format" });
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid email format" });
       }
       const existing = await User.findOne({ email });
       if (existing) {
-        return res.status(400).json({ success: false, message: "A user with this email already exists" });
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message: "A user with this email already exists",
+          });
       }
       staffUser.email = email;
     }
 
     if (name) staffUser.name = name;
-    if (permissions) staffUser.permissions = { ...staffUser.permissions, ...permissions };
+    if (permissions)
+      staffUser.permissions = { ...staffUser.permissions, ...permissions };
 
     await staffUser.save();
 
@@ -495,7 +533,11 @@ export const updateStaffStatus = async (req, res) => {
       });
     }
 
-    const staffUser = await User.findOne({ _id: id, role: "staff", tenantId: ownerId });
+    const staffUser = await User.findOne({
+      _id: id,
+      role: "staff",
+      tenantId: ownerId,
+    });
 
     if (!staffUser) {
       return res.status(404).json({
@@ -533,7 +575,11 @@ export const deleteStaff = async (req, res) => {
     const ownerId = req.user.tenantId || req.user._id;
     const { id } = req.params;
 
-    const staffUser = await User.findOne({ _id: id, role: "staff", tenantId: ownerId });
+    const staffUser = await User.findOne({
+      _id: id,
+      role: "staff",
+      tenantId: ownerId,
+    });
 
     if (!staffUser) {
       return res.status(404).json({

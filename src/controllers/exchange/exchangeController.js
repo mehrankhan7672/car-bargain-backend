@@ -1,9 +1,9 @@
 // src/controllers/exchange/exchangeController.js
-import mongoose from 'mongoose';
-import Exchange from '../../models/Exchange.js';
-import ExchangePayment from '../../models/exchangeDues.js';
-import Car from '../../models/Car.js';
-import { createLog } from '../../utils/logger.js';
+import mongoose from "mongoose";
+import Exchange from "../../models/Exchange.js";
+import ExchangePayment from "../../models/exchangeDues.js";
+import Car from "../../models/Car.js";
+import { createLog } from "../../utils/logger.js";
 
 // ==================================================
 // Helpers
@@ -11,15 +11,15 @@ import { createLog } from '../../utils/logger.js';
 
 const generateDealNumber = async (userId) => {
   const count = await Exchange.countDocuments({ userId });
-  return `EXC-${String(count + 1).padStart(4, '0')}`;
+  return `EXC-${String(count + 1).padStart(4, "0")}`;
 };
 
-const numberFields = ['year', 'mileage', 'value', 'actualValue', 'salePrice'];
+const numberFields = ["year", "mileage", "value", "actualValue", "salePrice"];
 
 const cleanNestedNumbers = (obj = {}) => {
   const out = { ...obj };
   numberFields.forEach((f) => {
-    if (out[f] !== undefined && out[f] !== null && out[f] !== '') {
+    if (out[f] !== undefined && out[f] !== null && out[f] !== "") {
       out[f] = Number(out[f]);
     }
   });
@@ -27,10 +27,10 @@ const cleanNestedNumbers = (obj = {}) => {
 };
 
 const buildOwner = (o = {}) => ({
-  name: o.name || '',
-  cnic: o.cnic || '',
-  phone: o.phone || '',
-  address: o.address || '',
+  name: o.name || "",
+  cnic: o.cnic || "",
+  phone: o.phone || "",
+  address: o.address || "",
 });
 
 // Build snapshot from a stock car – owner = dealer's details
@@ -39,7 +39,8 @@ const buildShowroomCarSnapshot = (incoming = {}, stockCar) => ({
   company: incoming.company || stockCar.company,
   model: incoming.model || stockCar.model,
   year: incoming.year || stockCar.year,
-  registrationNumber: incoming.registrationNumber || stockCar.registrationNumber,
+  registrationNumber:
+    incoming.registrationNumber || stockCar.registrationNumber,
   carType: stockCar.carType,
   registrationCity: stockCar.registrationCity,
   localNumber: stockCar.localNumber,
@@ -47,15 +48,15 @@ const buildShowroomCarSnapshot = (incoming = {}, stockCar) => ({
   value: incoming.value,
   dealerId: stockCar.dealerId,
   dealerName: stockCar.dealerName,
-  chassisNumber: stockCar.chassisNumber || '',
-  mileage: stockCar.mileage || '',
-  condition: stockCar.condition || '',
+  chassisNumber: stockCar.chassisNumber || "",
+  mileage: stockCar.mileage || "",
+  condition: stockCar.condition || "",
   actualValue: stockCar.actualValue || 0,
   owner: {
-    name: stockCar.dealerName || stockCar.userName || '',
-    cnic: stockCar.userCnic || '',
-    phone: stockCar.userPhone || '',
-    address: stockCar.userAddress || '',
+    name: stockCar.dealerName || stockCar.userName || "",
+    cnic: stockCar.userCnic || "",
+    phone: stockCar.userPhone || "",
+    address: stockCar.userAddress || "",
   },
 });
 
@@ -100,22 +101,37 @@ export const createExchange = async (req, res) => {
 
     // --- Customer (2) vehicle + owner ---
     if (!customerCar?.owner?.name || !customerCar?.owner?.phone) {
-      return res.status(400).json({ success: false, message: 'Customer name and phone are required' });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Customer name and phone are required",
+        });
     }
     if (!customerCar?.company || !customerCar?.model) {
-      return res.status(400).json({ success: false, message: "Please enter the customer vehicle's make and model" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Please enter the customer vehicle's make and model",
+        });
     }
     if (!customerCar?.value) {
-      return res.status(400).json({ success: false, message: "Please enter the customer vehicle's agreed value" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Please enter the customer vehicle's agreed value",
+        });
     }
     const customerCarSnapshot = buildCustomerCarSnapshot(customerCar);
 
-    const source = showroomCar?.source === 'manual' ? 'manual' : 'stock';
+    const source = showroomCar?.source === "manual" ? "manual" : "stock";
     let stockCar = null;
     let showroomCarSnapshot;
 
     // --- Manual mode: Customer 1's vehicle ---
-    if (source === 'manual') {
+    if (source === "manual") {
       if (!showroomCar?.company || !showroomCar?.model) {
         return res.status(400).json({
           success: false,
@@ -131,12 +147,12 @@ export const createExchange = async (req, res) => {
       if (!showroomCar?.owner?.name || !showroomCar?.owner?.phone) {
         return res.status(400).json({
           success: false,
-          message: 'Customer 1 name and phone are required',
+          message: "Customer 1 name and phone are required",
         });
       }
 
       showroomCarSnapshot = cleanNestedNumbers({
-        source: 'manual',
+        source: "manual",
         company: showroomCar.company,
         model: showroomCar.model,
         year: showroomCar.year,
@@ -156,27 +172,31 @@ export const createExchange = async (req, res) => {
       if (!showroomCar?.carId) {
         return res.status(400).json({
           success: false,
-          message: 'Please select a showroom vehicle from stock',
+          message: "Please select a showroom vehicle from stock",
         });
       }
       if (!mongoose.Types.ObjectId.isValid(showroomCar.carId)) {
         return res.status(400).json({
           success: false,
-          message: 'Invalid showroom vehicle selected',
+          message: "Invalid showroom vehicle selected",
         });
       }
 
-      stockCar = await Car.findOne({ _id: showroomCar.carId, userId: req.userId });
+      stockCar = await Car.findOne({
+        _id: showroomCar.carId,
+        userId: req.userId,
+      });
       if (!stockCar) {
         return res.status(404).json({
           success: false,
-          message: 'Selected showroom vehicle was not found in stock',
+          message: "Selected showroom vehicle was not found in stock",
         });
       }
-      if (stockCar.status === 'Sold') {
+      if (stockCar.status === "Sold") {
         return res.status(400).json({
           success: false,
-          message: 'This vehicle is already sold and cannot be used in a new exchange',
+          message:
+            "This vehicle is already sold and cannot be used in a new exchange",
         });
       }
       if (exceedsSalePrice(showroomCar.value, stockCar.salePrice)) {
@@ -187,7 +207,7 @@ export const createExchange = async (req, res) => {
       }
 
       showroomCarSnapshot = cleanNestedNumbers({
-        source: 'stock',
+        source: "stock",
         ...buildShowroomCarSnapshot(showroomCar, stockCar),
       });
     }
@@ -198,7 +218,7 @@ export const createExchange = async (req, res) => {
       showroomCar: showroomCarSnapshot,
       customerCar: customerCarSnapshot,
       adjustments: Array.isArray(adjustments) ? adjustments : [],
-      status: status || 'Pending',
+      status: status || "Pending",
       date: date || Date.now(),
       notes,
       amountReceivedFromCustomer: Number(amountReceivedFromCustomer || 0),
@@ -210,19 +230,19 @@ export const createExchange = async (req, res) => {
 
     // Reserve the stock car if used
     if (stockCar) {
-      stockCar.status = 'Reserved';
+      stockCar.status = "Reserved";
       await stockCar.save();
     }
 
     // Log
     await createLog({
       userId: req.userId,
-      category: 'Exchange',
-      action: 'Created',
+      category: "Exchange",
+      action: "Created",
       title: `Exchange ${exchange.dealNumber} created`,
       description: `${exchange.exchangeType} · ${exchange.customerCar.owner.name} · Vehicle A (${source}): ${exchange.showroomCar.company} ${exchange.showroomCar.model} ↔ Vehicle B: ${exchange.customerCar.company} ${exchange.customerCar.model}`,
       refId: exchange._id,
-      refModel: 'Exchange',
+      refModel: "Exchange",
       amount: exchange.finalAmount,
       performedBy: req.user.name,
       performedByUserId: req.user._id,
@@ -230,25 +250,28 @@ export const createExchange = async (req, res) => {
 
     if (exchange.showroomCar.carId) {
       await exchange.populate({
-        path: 'showroomCar.carId',
-        select: 'company model variant year registrationNumber images status salePrice dealerName',
+        path: "showroomCar.carId",
+        select:
+          "company model variant year registrationNumber images status salePrice dealerName",
       });
     }
 
     res.status(201).json({
       success: true,
-      message: 'Exchange deal saved successfully',
+      message: "Exchange deal saved successfully",
       data: exchange,
     });
   } catch (error) {
-    console.error('Create exchange error:', error);
-    if (error.name === 'ValidationError') {
+    console.error("Create exchange error:", error);
+    if (error.name === "ValidationError") {
       const errors = Object.values(error.errors).map((err) => err.message);
-      return res.status(400).json({ success: false, message: 'Validation error', errors });
+      return res
+        .status(400)
+        .json({ success: false, message: "Validation error", errors });
     }
     res.status(500).json({
       success: false,
-      message: 'Failed to create exchange deal',
+      message: "Failed to create exchange deal",
       error: error.message,
     });
   }
@@ -262,7 +285,7 @@ export const getExchanges = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const search = req.query.search || '';
+    const search = req.query.search || "";
     const status = req.query.status;
     const exchangeType = req.query.exchangeType;
 
@@ -273,21 +296,24 @@ export const getExchanges = async (req, res) => {
     if (exchangeType) filter.exchangeType = exchangeType;
     if (search) {
       filter.$or = [
-        { 'customerCar.owner.name': { $regex: search, $options: 'i' } },
-        { 'customerCar.owner.phone': { $regex: search, $options: 'i' } },
-        { 'customerCar.owner.cnic': { $regex: search, $options: 'i' } },
-        { 'showroomCar.owner.name': { $regex: search, $options: 'i' } },
-        { dealNumber: { $regex: search, $options: 'i' } },
-        { 'showroomCar.company': { $regex: search, $options: 'i' } },
-        { 'showroomCar.model': { $regex: search, $options: 'i' } },
-        { 'customerCar.company': { $regex: search, $options: 'i' } },
-        { 'customerCar.model': { $regex: search, $options: 'i' } },
+        { "customerCar.owner.name": { $regex: search, $options: "i" } },
+        { "customerCar.owner.phone": { $regex: search, $options: "i" } },
+        { "customerCar.owner.cnic": { $regex: search, $options: "i" } },
+        { "showroomCar.owner.name": { $regex: search, $options: "i" } },
+        { dealNumber: { $regex: search, $options: "i" } },
+        { "showroomCar.company": { $regex: search, $options: "i" } },
+        { "showroomCar.model": { $regex: search, $options: "i" } },
+        { "customerCar.company": { $regex: search, $options: "i" } },
+        { "customerCar.model": { $regex: search, $options: "i" } },
       ];
     }
 
     const [exchanges, total] = await Promise.all([
       Exchange.find(filter)
-        .populate({ path: 'showroomCar.carId', select: 'company model year registrationNumber images' })
+        .populate({
+          path: "showroomCar.carId",
+          select: "company model year registrationNumber images",
+        })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -298,11 +324,17 @@ export const getExchanges = async (req, res) => {
       success: true,
       data: exchanges,
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
-      message: 'Exchanges retrieved successfully',
+      message: "Exchanges retrieved successfully",
     });
   } catch (error) {
-    console.error('Get exchanges error:', error);
-    res.status(500).json({ success: false, message: 'Failed to get exchanges', error: error.message });
+    console.error("Get exchanges error:", error);
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to get exchanges",
+        error: error.message,
+      });
   }
 };
 
@@ -314,19 +346,37 @@ export const getExchangeById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const exchange = await Exchange.findOne({ _id: id, userId: req.userId }).populate({
-      path: 'showroomCar.carId',
-      select: 'company model variant year registrationNumber images status salePrice dealerName',
+    const exchange = await Exchange.findOne({
+      _id: id,
+      userId: req.userId,
+    }).populate({
+      path: "showroomCar.carId",
+      select:
+        "company model variant year registrationNumber images status salePrice dealerName",
     });
 
     if (!exchange) {
-      return res.status(404).json({ success: false, message: 'Exchange not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Exchange not found" });
     }
 
-    res.status(200).json({ success: true, data: exchange, message: 'Exchange retrieved successfully' });
+    res
+      .status(200)
+      .json({
+        success: true,
+        data: exchange,
+        message: "Exchange retrieved successfully",
+      });
   } catch (error) {
-    console.error('Get exchange by ID error:', error);
-    res.status(500).json({ success: false, message: 'Failed to get exchange', error: error.message });
+    console.error("Get exchange by ID error:", error);
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to get exchange",
+        error: error.message,
+      });
   }
 };
 
@@ -339,7 +389,9 @@ export const updateExchange = async (req, res) => {
     const { id } = req.params;
     const exchange = await Exchange.findOne({ _id: id, userId: req.userId });
     if (!exchange) {
-      return res.status(404).json({ success: false, message: 'Exchange not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Exchange not found" });
     }
 
     const {
@@ -366,11 +418,13 @@ export const updateExchange = async (req, res) => {
 
     // --- Update showroom car ---
     if (showroomCar) {
-      const newSource = showroomCar.source === 'manual' ? 'manual' : 'stock';
-      const oldSource = exchange.showroomCar.source || 'stock';
-      const previousCarId = exchange.showroomCar.carId ? String(exchange.showroomCar.carId) : null;
+      const newSource = showroomCar.source === "manual" ? "manual" : "stock";
+      const oldSource = exchange.showroomCar.source || "stock";
+      const previousCarId = exchange.showroomCar.carId
+        ? String(exchange.showroomCar.carId)
+        : null;
 
-      if (newSource === 'manual') {
+      if (newSource === "manual") {
         if (!showroomCar.company || !showroomCar.model) {
           return res.status(400).json({
             success: false,
@@ -380,16 +434,19 @@ export const updateExchange = async (req, res) => {
         if (!showroomCar.owner?.name || !showroomCar.owner?.phone) {
           return res.status(400).json({
             success: false,
-            message: 'Customer 1 name and phone are required',
+            message: "Customer 1 name and phone are required",
           });
         }
 
-        if (oldSource === 'stock' && previousCarId) {
-          await Car.findOneAndUpdate({ _id: previousCarId, userId: req.userId }, { status: 'Available' });
+        if (oldSource === "stock" && previousCarId) {
+          await Car.findOneAndUpdate(
+            { _id: previousCarId, userId: req.userId },
+            { status: "Available" },
+          );
         }
 
         const manualSnapshot = cleanNestedNumbers({
-          source: 'manual',
+          source: "manual",
           company: showroomCar.company,
           model: showroomCar.model,
           year: showroomCar.year,
@@ -406,28 +463,56 @@ export const updateExchange = async (req, res) => {
         manualSnapshot.owner = buildOwner(showroomCar.owner);
         exchange.showroomCar = manualSnapshot;
       } else {
-        const carIdChanged = showroomCar.carId && showroomCar.carId !== previousCarId;
+        const carIdChanged =
+          showroomCar.carId && showroomCar.carId !== previousCarId;
 
-        let merged = { ...exchange.showroomCar.toObject(), ...cleanNestedNumbers(showroomCar), source: 'stock' };
+        let merged = {
+          ...exchange.showroomCar.toObject(),
+          ...cleanNestedNumbers(showroomCar),
+          source: "stock",
+        };
 
-        if (carIdChanged || oldSource === 'manual') {
-          if (!showroomCar.carId || !mongoose.Types.ObjectId.isValid(showroomCar.carId)) {
-            return res.status(400).json({ success: false, message: 'Please select a showroom vehicle from stock' });
+        if (carIdChanged || oldSource === "manual") {
+          if (
+            !showroomCar.carId ||
+            !mongoose.Types.ObjectId.isValid(showroomCar.carId)
+          ) {
+            return res
+              .status(400)
+              .json({
+                success: false,
+                message: "Please select a showroom vehicle from stock",
+              });
           }
-          const newStockCar = await Car.findOne({ _id: showroomCar.carId, userId: req.userId });
+          const newStockCar = await Car.findOne({
+            _id: showroomCar.carId,
+            userId: req.userId,
+          });
           if (!newStockCar) {
-            return res.status(404).json({ success: false, message: 'Selected showroom vehicle was not found in stock' });
+            return res
+              .status(404)
+              .json({
+                success: false,
+                message: "Selected showroom vehicle was not found in stock",
+              });
           }
 
           merged = cleanNestedNumbers({
-            source: 'stock',
+            source: "stock",
             ...buildShowroomCarSnapshot(showroomCar, newStockCar),
           });
 
-          if (oldSource === 'stock' && previousCarId && previousCarId !== String(newStockCar._id)) {
-            await Car.findOneAndUpdate({ _id: previousCarId, userId: req.userId }, { status: 'Available' });
+          if (
+            oldSource === "stock" &&
+            previousCarId &&
+            previousCarId !== String(newStockCar._id)
+          ) {
+            await Car.findOneAndUpdate(
+              { _id: previousCarId, userId: req.userId },
+              { status: "Available" },
+            );
           }
-          newStockCar.status = 'Reserved';
+          newStockCar.status = "Reserved";
           await newStockCar.save();
         }
 
@@ -444,7 +529,10 @@ export const updateExchange = async (req, res) => {
 
     // --- Update customer vehicle (owner + car) ---
     if (customerCar) {
-      const merged = { ...exchange.customerCar.toObject(), ...cleanNestedNumbers(customerCar) };
+      const merged = {
+        ...exchange.customerCar.toObject(),
+        ...cleanNestedNumbers(customerCar),
+      };
       if (customerCar.owner) {
         const existingOwner = exchange.customerCar.owner?.toObject
           ? exchange.customerCar.owner.toObject()
@@ -459,12 +547,12 @@ export const updateExchange = async (req, res) => {
     // Log
     await createLog({
       userId: req.userId,
-      category: 'Exchange',
-      action: 'Updated',
+      category: "Exchange",
+      action: "Updated",
       title: `Exchange ${exchange.dealNumber} updated`,
       description: `${exchange.exchangeType} · Final amount PKR ${exchange.finalAmount}`,
       refId: exchange._id,
-      refModel: 'Exchange',
+      refModel: "Exchange",
       amount: exchange.finalAmount,
       performedBy: req.user.name,
       performedByUserId: req.user._id,
@@ -472,19 +560,34 @@ export const updateExchange = async (req, res) => {
 
     if (exchange.showroomCar.carId) {
       await exchange.populate({
-        path: 'showroomCar.carId',
-        select: 'company model variant year registrationNumber images status salePrice dealerName',
+        path: "showroomCar.carId",
+        select:
+          "company model variant year registrationNumber images status salePrice dealerName",
       });
     }
 
-    res.status(200).json({ success: true, data: exchange, message: 'Exchange updated successfully' });
+    res
+      .status(200)
+      .json({
+        success: true,
+        data: exchange,
+        message: "Exchange updated successfully",
+      });
   } catch (error) {
-    console.error('Update exchange error:', error);
-    if (error.name === 'ValidationError') {
+    console.error("Update exchange error:", error);
+    if (error.name === "ValidationError") {
       const errors = Object.values(error.errors).map((err) => err.message);
-      return res.status(400).json({ success: false, message: 'Validation error', errors });
+      return res
+        .status(400)
+        .json({ success: false, message: "Validation error", errors });
     }
-    res.status(500).json({ success: false, message: 'Failed to update exchange', error: error.message });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to update exchange",
+        error: error.message,
+      });
   }
 };
 
@@ -498,11 +601,16 @@ export const deleteExchange = async (req, res) => {
 
     const exchange = await Exchange.findOne({ _id: id, userId: req.userId });
     if (!exchange) {
-      return res.status(404).json({ success: false, message: 'Exchange not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Exchange not found" });
     }
 
     if (exchange.showroomCar?.carId) {
-      await Car.findOneAndUpdate({ _id: exchange.showroomCar.carId, userId: req.userId }, { status: 'Available' });
+      await Car.findOneAndUpdate(
+        { _id: exchange.showroomCar.carId, userId: req.userId },
+        { status: "Available" },
+      );
     }
 
     // Optionally delete all associated payment records
@@ -512,20 +620,32 @@ export const deleteExchange = async (req, res) => {
 
     await createLog({
       userId: req.userId,
-      category: 'Exchange',
-      action: 'Deleted',
+      category: "Exchange",
+      action: "Deleted",
       title: `Exchange ${exchange.dealNumber} deleted`,
       refId: exchange._id,
-      refModel: 'Exchange',
+      refModel: "Exchange",
       amount: exchange.finalAmount,
       performedBy: req.user.name,
       performedByUserId: req.user._id,
     });
 
-    res.status(200).json({ success: true, data: {}, message: 'Exchange deleted successfully' });
+    res
+      .status(200)
+      .json({
+        success: true,
+        data: {},
+        message: "Exchange deleted successfully",
+      });
   } catch (error) {
-    console.error('Delete exchange error:', error);
-    res.status(500).json({ success: false, message: 'Failed to delete exchange', error: error.message });
+    console.error("Delete exchange error:", error);
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to delete exchange",
+        error: error.message,
+      });
   }
 };
 
@@ -534,36 +654,45 @@ export const deleteExchange = async (req, res) => {
 // ==================================================
 // @route  PATCH /api/exchanges/:id/payment
 export const recordPayment = async (req, res) => {
-   console.log('🔥 recordPayment HIT!');
+  console.log("🔥 recordPayment HIT!");
   try {
-
     const { id } = req.params;
     const { amount, direction, date, method, notes } = req.body;
 
     // Validate inputs
     if (!amount || amount <= 0) {
-      return res.status(400).json({ success: false, message: 'Valid positive amount is required' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Valid positive amount is required" });
     }
 
-    const validDirections = ['customer_pays_showroom', 'showroom_pays_customer'];
+    const validDirections = [
+      "customer_pays_showroom",
+      "showroom_pays_customer",
+    ];
     if (!direction || !validDirections.includes(direction)) {
-      return res.status(400).json({ success: false, message: 'Invalid direction' });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid direction" });
     }
 
     const exchange = await Exchange.findOne({ _id: id, userId: req.userId });
     if (!exchange) {
-      return res.status(404).json({ success: false, message: 'Exchange not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Exchange not found" });
     }
 
     const amountNum = Number(amount);
     let due = 0;
 
     // Determine which due amount applies
-    if (direction === 'customer_pays_showroom') {
-      if (exchange.finalDirection !== 'customer_pays_showroom') {
+    if (direction === "customer_pays_showroom") {
+      if (exchange.finalDirection !== "customer_pays_showroom") {
         return res.status(400).json({
           success: false,
-          message: 'This direction is not consistent with the exchange settlement',
+          message:
+            "This direction is not consistent with the exchange settlement",
         });
       }
       due = Number(exchange.dueAmount) || 0;
@@ -573,11 +702,13 @@ export const recordPayment = async (req, res) => {
           message: `Payment exceeds the remaining due amount of ${due}`,
         });
       }
-    } else { // showroom_pays_customer
-      if (exchange.finalDirection !== 'showroom_pays_customer') {
+    } else {
+      // showroom_pays_customer
+      if (exchange.finalDirection !== "showroom_pays_customer") {
         return res.status(400).json({
           success: false,
-          message: 'This direction is not consistent with the exchange settlement',
+          message:
+            "This direction is not consistent with the exchange settlement",
         });
       }
       due = Number(exchange.dueFromShowroom) || 0;
@@ -595,15 +726,18 @@ export const recordPayment = async (req, res) => {
       exchangeId: exchange._id,
       amount: amountNum,
       date: date ? new Date(date) : new Date(),
-      method: method || 'Cash',
-      direction: direction === 'customer_pays_showroom' ? 'customer_to_showroom' : 'showroom_to_customer',
-      notes: notes || '',
+      method: method || "Cash",
+      direction:
+        direction === "customer_pays_showroom"
+          ? "customer_to_showroom"
+          : "showroom_to_customer",
+      notes: notes || "",
       recordedBy: req.userId,
     });
     await payment.save();
 
     // Update the exchange
-    if (direction === 'customer_pays_showroom') {
+    if (direction === "customer_pays_showroom") {
       const currentReceived = Number(exchange.amountReceivedFromCustomer) || 0;
       exchange.amountReceivedFromCustomer = currentReceived + amountNum;
     } else {
@@ -616,12 +750,12 @@ export const recordPayment = async (req, res) => {
     // Log
     await createLog({
       userId: req.userId,
-      category: 'Exchange',
-      action: 'Payment',
+      category: "Exchange",
+      action: "Payment",
       title: `Payment of ${amountNum} recorded for ${exchange.dealNumber}`,
       description: `${direction} — ${exchange.customerCar.owner.name}`,
       refId: exchange._id,
-      refModel: 'Exchange',
+      refModel: "Exchange",
       amount: amountNum,
       performedBy: req.user.name,
       performedByUserId: req.user._id,
@@ -629,24 +763,34 @@ export const recordPayment = async (req, res) => {
 
     // Populate and return updated exchange with payments
     await exchange.populate({
-      path: 'showroomCar.carId',
-      select: 'company model variant year registrationNumber images status salePrice dealerName',
+      path: "showroomCar.carId",
+      select:
+        "company model variant year registrationNumber images status salePrice dealerName",
     });
 
     // Also include the payment record in response
-    const updatedPayment = await ExchangePayment.findOne({ _id: payment._id, userId: req.userId });
+    const updatedPayment = await ExchangePayment.findOne({
+      _id: payment._id,
+      userId: req.userId,
+    });
 
     res.status(200).json({
       success: true,
-      message: 'Payment recorded successfully',
+      message: "Payment recorded successfully",
       data: {
         exchange,
         payment: updatedPayment,
       },
     });
   } catch (error) {
-    console.error('Record payment error:', error);
-    res.status(500).json({ success: false, message: 'Failed to record payment', error: error.message });
+    console.error("Record payment error:", error);
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to record payment",
+        error: error.message,
+      });
   }
 };
 
@@ -658,22 +802,36 @@ export const getExchangePayments = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const exchange = await Exchange.findOne({ _id: id, userId: req.userId }).select('_id');
+    const exchange = await Exchange.findOne({
+      _id: id,
+      userId: req.userId,
+    }).select("_id");
     if (!exchange) {
-      return res.status(404).json({ success: false, message: 'Exchange not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "Exchange not found" });
     }
 
-    const payments = await ExchangePayment.find({ exchangeId: id, userId: req.userId })
+    const payments = await ExchangePayment.find({
+      exchangeId: id,
+      userId: req.userId,
+    })
       .sort({ date: -1 })
-      .populate('recordedBy', 'name email');
+      .populate("recordedBy", "name email");
     res.status(200).json({
       success: true,
       data: payments,
-      message: 'Payments retrieved successfully',
+      message: "Payments retrieved successfully",
     });
   } catch (error) {
-    console.error('Get payments error:', error);
-    res.status(500).json({ success: false, message: 'Failed to get payments', error: error.message });
+    console.error("Get payments error:", error);
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to get payments",
+        error: error.message,
+      });
   }
 };
 
@@ -684,14 +842,24 @@ export const getExchangePayments = async (req, res) => {
 export const getExchangeStats = async (req, res) => {
   try {
     const ownerFilter = { userId: req.userId };
-    const [total, pending, completed, headToHead, giving, getting] = await Promise.all([
-      Exchange.countDocuments(ownerFilter),
-      Exchange.countDocuments({ ...ownerFilter, status: 'Pending' }),
-      Exchange.countDocuments({ ...ownerFilter, status: 'Completed' }),
-      Exchange.countDocuments({ ...ownerFilter, exchangeType: 'Head-to-Head' }),
-      Exchange.countDocuments({ ...ownerFilter, exchangeType: 'Car + Money Giving' }),
-      Exchange.countDocuments({ ...ownerFilter, exchangeType: 'Car + Money Getting' }),
-    ]);
+    const [total, pending, completed, headToHead, giving, getting] =
+      await Promise.all([
+        Exchange.countDocuments(ownerFilter),
+        Exchange.countDocuments({ ...ownerFilter, status: "Pending" }),
+        Exchange.countDocuments({ ...ownerFilter, status: "Completed" }),
+        Exchange.countDocuments({
+          ...ownerFilter,
+          exchangeType: "Head-to-Head",
+        }),
+        Exchange.countDocuments({
+          ...ownerFilter,
+          exchangeType: "Car + Money Giving",
+        }),
+        Exchange.countDocuments({
+          ...ownerFilter,
+          exchangeType: "Car + Money Getting",
+        }),
+      ]);
 
     res.status(200).json({
       success: true,
@@ -699,12 +867,22 @@ export const getExchangeStats = async (req, res) => {
         total,
         pending,
         completed,
-        byType: { headToHead, carMoneyGiving: giving, carMoneyGetting: getting },
+        byType: {
+          headToHead,
+          carMoneyGiving: giving,
+          carMoneyGetting: getting,
+        },
       },
-      message: 'Exchange statistics retrieved successfully',
+      message: "Exchange statistics retrieved successfully",
     });
   } catch (error) {
-    console.error('Get exchange stats error:', error);
-    res.status(500).json({ success: false, message: 'Failed to get exchange statistics', error: error.message });
+    console.error("Get exchange stats error:", error);
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Failed to get exchange statistics",
+        error: error.message,
+      });
   }
 };

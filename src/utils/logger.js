@@ -1,5 +1,5 @@
 // src/utils/logger.js
-import Log from '../models/Log.js';
+import Log from "../models/Log.js";
 
 // FIX: centralized log writer so every controller (cars, salaries,
 // employees, dealers, exchanges) can drop a single line to record an
@@ -12,17 +12,19 @@ export const createLog = async ({
   category,
   action,
   title,
-  description = '',
+  description = "",
   refId = null,
   refModel = null,
   amount = null,
-  performedBy = 'System',
+  performedBy = "System",
   performedByUserId = null,
   meta = {},
 }) => {
   try {
     if (!userId) {
-      console.error('⚠️  Skipped log entry: userId is required ("' + title + '")');
+      console.error(
+        '⚠️  Skipped log entry: userId is required ("' + title + '")',
+      );
       return;
     }
     await Log.create({
@@ -38,7 +40,7 @@ export const createLog = async ({
       meta,
     });
   } catch (error) {
-    console.error('⚠️  Failed to write log entry:', error.message);
+    console.error("⚠️  Failed to write log entry:", error.message);
   }
 };
 
