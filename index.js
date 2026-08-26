@@ -14,6 +14,7 @@ import exchangeRoutes from "./src/routes/exchangeRoutes.js";
 import logRoutes from "./src/routes/logRoutes.js";
 import expenseRoutes from "./src/routes/expenseRoutes.js";
 import { protect } from "./src/middleware/authMiddleware.js";
+import saleRoutes from "./src/routes/saleRoutes.js";
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -66,6 +67,7 @@ app.use("/api/salaries", salaryRoutes);
 app.use("/api/exchanges", exchangeRoutes);
 app.use("/api/logs", logRoutes);
 app.use("/api/expenses", protect, expenseRoutes);
+app.use('/api/sales', protect, saleRoutes);
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.json({

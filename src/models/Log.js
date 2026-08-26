@@ -13,16 +13,7 @@ const logSchema = new mongoose.Schema(
     category: {
       type: String,
       required: [true, "Log category is required"],
-      enum: [
-        "Car",
-        "Exchange",
-        "Employee",
-        "Salary",
-        "Dealer",
-        "Expense",
-        "Auth",
-        "Other",
-      ],
+      enum: ['Car', 'Exchange', 'Employee', 'Salary', 'Dealer', 'Expense', 'Sale', 'Auth', 'Other'],
       index: true,
     },
     action: {
