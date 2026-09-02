@@ -14,7 +14,8 @@ const generateDealNumber = async (userId) => {
   return `EXC-${String(count + 1).padStart(4, "0")}`;
 };
 
-const numberFields = ["year", "mileage", "value", "actualValue", "salePrice"];
+// Add "powerCC" to numeric fields (engineNumber stays string)
+const numberFields = ["year", "mileage", "value", "actualValue", "salePrice", "powerCC"];
 
 const cleanNestedNumbers = (obj = {}) => {
   const out = { ...obj };
@@ -28,19 +29,19 @@ const cleanNestedNumbers = (obj = {}) => {
 
 const buildOwner = (o = {}) => ({
   name: o.name || "",
+  fatherName: o.fatherName || "",
   cnic: o.cnic || "",
   phone: o.phone || "",
   address: o.address || "",
 });
 
-// Build snapshot from a stock car – owner = dealer's details
+// Build snapshot from a stock car – includes engineNumber, color, powerCC
 const buildShowroomCarSnapshot = (incoming = {}, stockCar) => ({
   carId: stockCar._id,
   company: incoming.company || stockCar.company,
   model: incoming.model || stockCar.model,
   year: incoming.year || stockCar.year,
-  registrationNumber:
-    incoming.registrationNumber || stockCar.registrationNumber,
+  registrationNumber: incoming.registrationNumber || stockCar.registrationNumber,
   carType: stockCar.carType,
   registrationCity: stockCar.registrationCity,
   localNumber: stockCar.localNumber,
@@ -49,11 +50,15 @@ const buildShowroomCarSnapshot = (incoming = {}, stockCar) => ({
   dealerId: stockCar.dealerId,
   dealerName: stockCar.dealerName,
   chassisNumber: stockCar.chassisNumber || "",
+  engineNumber: stockCar.engineNumber || incoming.engineNumber || "",  // 👈 NEW
   mileage: stockCar.mileage || "",
+  color: stockCar.color || incoming.color || "",                       // 👈 NEW
+  powerCC: stockCar.powerCC || incoming.powerCC || "",                 // 👈 NEW
   condition: stockCar.condition || "",
   actualValue: stockCar.actualValue || 0,
   owner: {
     name: stockCar.dealerName || stockCar.userName || "",
+    fatherName: stockCar.userFatherName || "",
     cnic: stockCar.userCnic || "",
     phone: stockCar.userPhone || "",
     address: stockCar.userAddress || "",
@@ -67,7 +72,10 @@ const buildCustomerCarSnapshot = (customerCar = {}) => {
     year: customerCar.year,
     registrationNumber: customerCar.registrationNumber,
     chassisNumber: customerCar.chassisNumber,
+    engineNumber: customerCar.engineNumber,     // 👈 NEW
     mileage: customerCar.mileage,
+    color: customerCar.color,                   // 👈 NEW
+    powerCC: customerCar.powerCC,               // 👈 NEW
     condition: customerCar.condition,
     carType: customerCar.carType,
     registrationCity: customerCar.registrationCity,
@@ -161,7 +169,10 @@ export const createExchange = async (req, res) => {
         registrationCity: showroomCar.registrationCity,
         localNumber: showroomCar.localNumber,
         chassisNumber: showroomCar.chassisNumber,
+        engineNumber: showroomCar.engineNumber,   // 👈 NEW
         mileage: showroomCar.mileage,
+        color: showroomCar.color,                 // 👈 NEW
+        powerCC: showroomCar.powerCC,             // 👈 NEW
         condition: showroomCar.condition,
         actualValue: showroomCar.actualValue,
         value: showroomCar.value,
@@ -455,7 +466,10 @@ export const updateExchange = async (req, res) => {
           registrationCity: showroomCar.registrationCity,
           localNumber: showroomCar.localNumber,
           chassisNumber: showroomCar.chassisNumber,
+          engineNumber: showroomCar.engineNumber,   // 👈 NEW
           mileage: showroomCar.mileage,
+          color: showroomCar.color,                 // 👈 NEW
+          powerCC: showroomCar.powerCC,             // 👈 NEW
           condition: showroomCar.condition,
           actualValue: showroomCar.actualValue,
           value: showroomCar.value,

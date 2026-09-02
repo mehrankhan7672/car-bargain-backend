@@ -17,6 +17,7 @@ const adjustmentSchema = new mongoose.Schema(
 const ownerSchema = new mongoose.Schema(
   {
     name: { type: String, trim: true },
+    fatherName: { type: String, trim: true },
     cnic: { type: String, trim: true },
     phone: { type: String, trim: true },
     address: { type: String, trim: true },
@@ -39,6 +40,8 @@ const exchangeSchema = new mongoose.Schema(
     showroomCar: {
       source: { type: String, enum: ["stock", "manual"], default: "stock" },
       carId: { type: mongoose.Schema.Types.ObjectId, ref: "Car" }, // stock only
+      color: { type: String, trim: true },
+      powerCC: { type: Number, min: 0 },
 
       company: { type: String, trim: true },
       model: { type: String, trim: true },
@@ -51,6 +54,7 @@ const exchangeSchema = new mongoose.Schema(
       registrationCity: { type: String, trim: true },
       localNumber: { type: String, trim: true },
       chassisNumber: { type: String, trim: true },
+      engineNumber: { type: String, trim: true },
       mileage: { type: Number },
       condition: { type: String, trim: true },
       actualValue: { type: Number, min: 0 },
@@ -75,8 +79,11 @@ const exchangeSchema = new mongoose.Schema(
       year: { type: Number },
       registrationNumber: { type: String, trim: true },
       chassisNumber: { type: String, trim: true },
+      engineNumber: { type: String, trim: true }, 
       mileage: { type: Number },
       condition: { type: String, trim: true },
+      color: { type: String, trim: true },
+      powerCC: { type: Number, min: 0 },
       carType: {
         type: String,
         enum: ["NCP (Non-Custom Paid)", "CP (Custom Paid)"],
