@@ -69,20 +69,38 @@ export const protect = async (req, res, next) => {
   }
 };
 
-export const checkPermission = (permissionKey) => (req, res, next) => {
+/**
+ * checkPermission(moduleName, action)
+ *
+ * @param {string} moduleName - The module to check ("cars", "sales", "dealers", etc.)
+ * @param {string} action     - The action to check ("view", "add", "edit", "delete")
+ *
+ * Usage examples:
+ *   checkPermission("cars", "view")
+ *   checkPermission("sales", "add")
+ *   checkPermission("expenses", "delete")
+ *
+ * Notes:
+ *  - The account owner (user without a tenantId) is always allowed.
+ *  - Staff users are checked against their nested permissions object.
+ */
+export const checkPermission = (moduleName, action) => (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ success: false, message: "Not authorized" });
   }
 
+  // Owner (no tenantId) has full access to everything
   const isOwner = !req.user.tenantId;
   if (isOwner) return next();
 
-  const allowed = req.user.permissions?.[permissionKey];
+  // Check the nested permission: permissions[moduleName][action]
+  const modulePermissions = req.user.permissions?.[moduleName];
+  const allowed = modulePermissions?.[action] === true;
+
   if (!allowed) {
-    const actionLabel = permissionKey.replace("can", "").toLowerCase();
     return res.status(403).json({
       success: false,
-      message: `You don't have permission to ${actionLabel} records. Ask the account owner to grant it.`,
+      message: `You don't have permission to ${action} ${moduleName}. Ask the account owner to grant it.`,
     });
   }
 

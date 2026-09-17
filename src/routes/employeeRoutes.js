@@ -1,3 +1,4 @@
+// src/routes/employeeRoutes.js
 import express from "express";
 import {
   getEmployees,
@@ -7,7 +8,7 @@ import {
   deleteEmployee,
   getEmployeeStats,
 } from "../controllers/employee/employeeController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, checkPermission } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -15,14 +16,19 @@ const router = express.Router();
 router.use(protect);
 
 // Routes
-router.route("/").get(getEmployees).post(createEmployee);
+router
+  .route("/")
+  .get(checkPermission("employees", "view"), getEmployees)
+  .post(checkPermission("employees", "add"), createEmployee);
 
-router.route("/stats").get(getEmployeeStats);
+router
+  .route("/stats")
+  .get(checkPermission("employees", "view"), getEmployeeStats);
 
 router
   .route("/:id")
-  .get(getEmployee)
-  .put(updateEmployee)
-  .delete(deleteEmployee);
+  .get(checkPermission("employees", "view"), getEmployee)
+  .put(checkPermission("employees", "edit"), updateEmployee)
+  .delete(checkPermission("employees", "delete"), deleteEmployee);
 
 export default router;

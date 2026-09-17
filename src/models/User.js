@@ -1,6 +1,32 @@
 // src/models/User.js
 import mongoose from "mongoose";
 
+// Define the modules that match your frontend
+const MODULES = [
+  "dashboard",
+  "cars",
+  "sales",
+  "exchanges",
+  "dealers",
+  "expenses",
+  "employees",
+  "salaries",
+];
+
+// Helper to create the default permission object for a module
+const defaultModulePermission = {
+  view: { type: Boolean, default: false },
+  add: { type: Boolean, default: false },
+  edit: { type: Boolean, default: false },
+  delete: { type: Boolean, default: false },
+};
+
+// Build the permissions schema dynamically
+const permissionsSchema = {};
+MODULES.forEach((mod) => {
+  permissionsSchema[mod] = defaultModulePermission;
+});
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -57,11 +83,16 @@ const userSchema = new mongoose.Schema(
       ref: "User",
       default: null,
     },
+    // NEW: Nested permissions object matching your frontend modules
     permissions: {
-      canView: { type: Boolean, default: true },
-      canAdd: { type: Boolean, default: true },
-      canEdit: { type: Boolean, default: true },
-      canDelete: { type: Boolean, default: true },
+      type: permissionsSchema,
+      default: () => {
+        const initialPerms = {};
+        MODULES.forEach((mod) => {
+          initialPerms[mod] = { view: false, add: false, edit: false, delete: false };
+        });
+        return initialPerms;
+      },
     },
     isActive: {
       type: Boolean,
@@ -79,8 +110,6 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
-
-// NO PRE-SAVE HOOK FOR PASSWORD HASHING - It's done in controller
 
 // Get public profile (exclude sensitive fields)
 userSchema.methods.getPublicProfile = function () {

@@ -35,7 +35,10 @@ router.get("/users/:id", getUserById);
 router.post("/staff", addStaff);
 router.get("/staff", getAllStaff);
 router.put("/staff/:id", updateStaff);
-router.put("/staff/:id/status", updateStaffStatus);
+
+// FIXED: Changed from .put to .patch to match your frontend staffService.setStatus()
+router.patch("/staff/:id/status", updateStaffStatus);
+
 router.delete("/staff/:id", deleteStaff);
 
 export default router;

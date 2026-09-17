@@ -1,5 +1,5 @@
 // src/routes/saleRoutes.js
-import express from 'express';
+import express from "express";
 import {
   createSale,
   getSales,
@@ -7,16 +7,35 @@ import {
   updateSale,
   deleteSale,
   getSaleStats,
-  addPayment,          // <-- Import the new controller
-} from '../controllers/sale/saleController.js';
+  addPayment,
+} from "../controllers/sale/saleController.js";
+import { protect, checkPermission } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.route('/stats').get(getSaleStats);
-router.route('/').post(createSale).get(getSales);
-router.route('/:id').get(getSaleById).put(updateSale).delete(deleteSale);
+// ✅ Every sale route requires a logged-in user (was missing before)
+router.use(protect);
+
+router
+  .route("/stats")
+  .get(checkPermission("sales", "view"), getSaleStats);
+
+router
+  .route("/")
+  .post(checkPermission("sales", "add"), createSale)
+  .get(checkPermission("sales", "view"), getSales);
+
+router
+  .route("/:id")
+  .get(checkPermission("sales", "view"), getSaleById)
+  .put(checkPermission("sales", "edit"), updateSale)
+  .delete(checkPermission("sales", "delete"), deleteSale);
 
 // Add payment to a sale – use :id to match the others
-router.post('/:id/payments', addPayment);
+router.post(
+  "/:id/payments",
+  checkPermission("sales", "edit"),
+  addPayment,
+);
 
 export default router;

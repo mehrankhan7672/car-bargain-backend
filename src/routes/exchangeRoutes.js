@@ -10,7 +10,7 @@ import {
   recordPayment,
   getExchangePayments,
 } from "../controllers/exchange/exchangeController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, checkPermission } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -18,16 +18,28 @@ const router = express.Router();
 router.use(protect);
 
 // ✅ Specific routes FIRST
-router.route("/stats").get(getExchangeStats);
-router.route("/:id/payment").put(recordPayment); // 👈 MUST come before /:id
-router.route("/:id/payments").get(getExchangePayments);
+router
+  .route("/stats")
+  .get(checkPermission("exchanges", "view"), getExchangeStats);
+
+router
+  .route("/:id/payment")
+  .put(checkPermission("exchanges", "edit"), recordPayment); // 👈 MUST come before /:id
+
+router
+  .route("/:id/payments")
+  .get(checkPermission("exchanges", "view"), getExchangePayments);
 
 // ✅ Generic CRUD routes LAST
-router.route("/").post(createExchange).get(getExchanges);
+router
+  .route("/")
+  .post(checkPermission("exchanges", "add"), createExchange)
+  .get(checkPermission("exchanges", "view"), getExchanges);
+
 router
   .route("/:id")
-  .get(getExchangeById)
-  .put(updateExchange)
-  .delete(deleteExchange);
+  .get(checkPermission("exchanges", "view"), getExchangeById)
+  .put(checkPermission("exchanges", "edit"), updateExchange)
+  .delete(checkPermission("exchanges", "delete"), deleteExchange);
 
 export default router;

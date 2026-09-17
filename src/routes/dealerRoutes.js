@@ -1,3 +1,4 @@
+// src/routes/dealerRoutes.js
 import express from "express";
 import {
   createDealer,
@@ -8,7 +9,7 @@ import {
   getDealerStats,
   searchDealers,
 } from "../controllers/dealer/dealerController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, checkPermission } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -16,13 +17,20 @@ const router = express.Router();
 router.use(protect);
 
 // Routes with specific paths first
-router.route("/stats").get(getDealerStats);
+router.route("/stats").get(checkPermission("dealers", "view"), getDealerStats);
 
-router.route("/search").get(searchDealers);
+router.route("/search").get(checkPermission("dealers", "view"), searchDealers);
 
 // Generic CRUD routes
-router.route("/").post(createDealer).get(getDealers);
+router
+  .route("/")
+  .post(checkPermission("dealers", "add"), createDealer)
+  .get(checkPermission("dealers", "view"), getDealers);
 
-router.route("/:id").get(getDealerById).put(updateDealer).delete(deleteDealer);
+router
+  .route("/:id")
+  .get(checkPermission("dealers", "view"), getDealerById)
+  .put(checkPermission("dealers", "edit"), updateDealer)
+  .delete(checkPermission("dealers", "delete"), deleteDealer);
 
 export default router;

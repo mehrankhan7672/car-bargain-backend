@@ -1,4 +1,4 @@
-// src/backend/routes/salaryRoutes.js
+// src/routes/salaryRoutes.js
 import express from "express";
 import {
   getSalaries,
@@ -10,7 +10,7 @@ import {
   getEmployeeSalaryHistory,
   getEmployeeBalance,
 } from "../controllers/employee/salaryController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, checkPermission } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -18,14 +18,27 @@ const router = express.Router();
 router.use(protect);
 
 // Routes
-router.route("/").get(getSalaries).post(createSalary);
+router
+  .route("/")
+  .get(checkPermission("salaries", "view"), getSalaries)
+  .post(checkPermission("salaries", "add"), createSalary);
 
-router.route("/stats").get(getSalaryStats);
+router
+  .route("/stats")
+  .get(checkPermission("salaries", "view"), getSalaryStats);
 
-router.route("/balance/:employeeId").get(getEmployeeBalance);
+router
+  .route("/balance/:employeeId")
+  .get(checkPermission("salaries", "view"), getEmployeeBalance);
 
-router.route("/employee/:employeeId").get(getEmployeeSalaryHistory);
+router
+  .route("/employee/:employeeId")
+  .get(checkPermission("salaries", "view"), getEmployeeSalaryHistory);
 
-router.route("/:id").get(getSalary).put(updateSalary).delete(deleteSalary);
+router
+  .route("/:id")
+  .get(checkPermission("salaries", "view"), getSalary)
+  .put(checkPermission("salaries", "edit"), updateSalary)
+  .delete(checkPermission("salaries", "delete"), deleteSalary);
 
 export default router;

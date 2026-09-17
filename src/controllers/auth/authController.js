@@ -139,6 +139,7 @@ export const register = async (req, res) => {
       bargainName,
       logo: logoFile ? logoFile.path : null,
       logoFileName: logoFile ? logoFile.filename : null,
+      // addedBy will default to null (this is the owner/root account)
     });
 
     // Save user to database
@@ -346,9 +347,13 @@ export const getUserById = async (req, res) => {
     });
   }
 };
+
+// Add a new staff member (Frontend: Create User Form)
+// @route   POST /api/auth/staff
+// @access  Private (Owner only)
 export const addStaff = async (req, res) => {
   try {
-    const { name, email, password, permissions } = req.body;
+    const { name, email, password, role } = req.body;
 
     // Validation
     if (!name || !email || !password) {
@@ -389,20 +394,23 @@ export const addStaff = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // ✅ NEW: The user creating this staff member (could be owner or another staff)
+    // We store req.user._id so we know exactly who created this account.
+    const creatorId = req.user._id;
+
     // Create staff user – inherit bargainName from owner and store hashed password
+    // Permissions will default to all false based on the new Model schema
     const staffUser = new User({
       name,
       email,
-      password: hashedPassword, // ✅ explicitly hashed
-      role: "staff",
+      password: hashedPassword,
+      role: role || "staff", // Use provided role or default to staff
       tenantId: ownerId,
       bargainName: owner.bargainName,
-      permissions: permissions || {
-        canView: true,
-        canAdd: true,
-        canEdit: true,
-        canDelete: false,
-      },
+      // ✅ NEW: Store the ID of the user who created this staff account.
+      // This powers the frontend sidebar check to hide Settings & Activity Logs.
+      addedBy: creatorId,
+      // permissions will be automatically set to the default empty object by Mongoose
       isActive: true,
     });
 
@@ -422,10 +430,11 @@ export const addStaff = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Server error while creating staff account",
-      details: error.message, // remove in production after debugging
+      details: error.message,
     });
   }
 };
+
 // Get all staff belonging to the logged-in owner/tenant
 // @route   GET /api/auth/staff
 // @access  Private
@@ -459,7 +468,7 @@ export const updateStaff = async (req, res) => {
   try {
     const ownerId = req.user.tenantId || req.user._id;
     const { id } = req.params;
-    const { name, email, permissions } = req.body;
+    const { name, email, role, permissions } = req.body;
 
     const staffUser = await User.findOne({
       _id: id,
@@ -494,8 +503,22 @@ export const updateStaff = async (req, res) => {
     }
 
     if (name) staffUser.name = name;
-    if (permissions)
-      staffUser.permissions = { ...staffUser.permissions, ...permissions };
+    if (role) staffUser.role = role;
+
+    // Update permissions - Deep merge to handle nested module structure
+    if (permissions) {
+      Object.keys(permissions).forEach((moduleKey) => {
+        if (staffUser.permissions[moduleKey]) {
+          // Only update if the module exists in the schema
+          staffUser.permissions[moduleKey] = {
+            ...staffUser.permissions[moduleKey],
+            ...permissions[moduleKey],
+          };
+        }
+      });
+      // Mark the nested path as modified so Mongoose saves it
+      staffUser.markModified("permissions");
+    }
 
     await staffUser.save();
 

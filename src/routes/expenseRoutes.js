@@ -8,17 +8,26 @@ import {
   deleteExpense,
   getExpenseStats,
 } from "../controllers/expense/expenseController.js";
+import { protect, checkPermission } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.route("/stats").get(getExpenseStats);
+// ✅ Every expense route requires a logged-in user (was missing before)
+router.use(protect);
 
-router.route("/").post(createExpense).get(getExpenses);
+router
+  .route("/stats")
+  .get(checkPermission("expenses", "view"), getExpenseStats);
+
+router
+  .route("/")
+  .post(checkPermission("expenses", "add"), createExpense)
+  .get(checkPermission("expenses", "view"), getExpenses);
 
 router
   .route("/:id")
-  .get(getExpenseById)
-  .put(updateExpense)
-  .delete(deleteExpense);
+  .get(checkPermission("expenses", "view"), getExpenseById)
+  .put(checkPermission("expenses", "edit"), updateExpense)
+  .delete(checkPermission("expenses", "delete"), deleteExpense);
 
 export default router;
