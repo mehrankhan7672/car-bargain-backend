@@ -13,7 +13,7 @@ import {
   updateStaffStatus,
   deleteStaff,
 } from "../controllers/auth/authController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, ownerOnly } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -31,14 +31,14 @@ router.get("/me", getMe);
 router.get("/users", getUsers);
 router.get("/users/:id", getUserById);
 
-// Staff management
-router.post("/staff", addStaff);
-router.get("/staff", getAllStaff);
-router.put("/staff/:id", updateStaff);
+// Staff management — OWNER ONLY (staff can never create users or change permissions)
+router.post("/staff", ownerOnly, addStaff);
+router.get("/staff", ownerOnly, getAllStaff);
+router.put("/staff/:id", ownerOnly, updateStaff);
 
 // FIXED: Changed from .put to .patch to match your frontend staffService.setStatus()
-router.patch("/staff/:id/status", updateStaffStatus);
+router.patch("/staff/:id/status", ownerOnly, updateStaffStatus);
 
-router.delete("/staff/:id", deleteStaff);
+router.delete("/staff/:id", ownerOnly, deleteStaff);
 
 export default router;

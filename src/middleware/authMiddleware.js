@@ -107,4 +107,26 @@ export const checkPermission = (moduleName, action) => (req, res, next) => {
   next();
 };
 
+/**
+ * ownerOnly
+ *
+ * Allows only the account owner (a user WITHOUT a tenantId).
+ * Use it for things staff must never do, no matter what permissions they have:
+ * managing staff accounts, changing permissions, reading activity logs.
+ */
+export const ownerOnly = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: "Not authorized" });
+  }
+
+  if (req.user.tenantId) {
+    return res.status(403).json({
+      success: false,
+      message: "Only the account owner can do this.",
+    });
+  }
+
+  next();
+};
+
 export default protect;

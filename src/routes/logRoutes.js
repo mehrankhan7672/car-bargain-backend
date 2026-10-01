@@ -4,12 +4,15 @@ import {
   getLogStats,
   deleteLog,
 } from "../controllers/log/logController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, ownerOnly } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // Every log route requires a logged-in user
 router.use(protect);
+
+// Activity logs are OWNER ONLY
+router.use(ownerOnly);
 
 router.route("/stats").get(getLogStats);
 
