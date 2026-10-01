@@ -7,9 +7,8 @@ import path from "path";
 import fs from "fs";
 import bcrypt from "bcryptjs";
 import { fileURLToPath } from "url";
-import User from "../../models/User.js";
+import User ,{ MODULES } from "../../models/User.js";
 import { response } from "express";
-
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,7 +53,35 @@ export const upload = multer({
   fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 },
 });
+// ---------------------------------------------------------------------------
+// Permission helpers
+// ---------------------------------------------------------------------------
+const PERMISSION_ACTIONS = ["view", "add", "edit", "delete"];
 
+// A user can't add/edit/delete a module they can't even view,
+// so switching "view" off switches the rest off too.
+const normalizeModule = (mod) => {
+  if (!mod.view) {
+    mod.add = false;
+    mod.edit = false;
+    mod.delete = false;
+  }
+  return mod;
+};
+
+// Builds a clean permissions object from request input.
+// Only known modules/actions are kept and every value is a real boolean.
+const buildPermissions = (input) => {
+  const clean = {};
+  MODULES.forEach((moduleName) => {
+    const mod = {};
+    PERMISSION_ACTIONS.forEach((action) => {
+      mod[action] = input?.[moduleName]?.[action] === true;
+    });
+    clean[moduleName] = normalizeModule(mod);
+  });
+  return clean;
+};
 // Generate JWT Token (Only used at login)
 const generateToken = (user) => {
   return jwt.sign(
@@ -353,7 +380,7 @@ export const getUserById = async (req, res) => {
 // @access  Private (Owner only)
 export const addStaff = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role ,permissions} = req.body;
 
     // Validation
     if (!name || !email || !password) {
@@ -506,17 +533,19 @@ export const updateStaff = async (req, res) => {
     if (role) staffUser.role = role;
 
     // Update permissions - Deep merge to handle nested module structure
-    if (permissions) {
-      Object.keys(permissions).forEach((moduleKey) => {
-        if (staffUser.permissions[moduleKey]) {
-          // Only update if the module exists in the schema
-          staffUser.permissions[moduleKey] = {
-            ...staffUser.permissions[moduleKey],
-            ...permissions[moduleKey],
-          };
-        }
+    // Update permissions — only known modules/actions, only real booleans
+    if (permissions && typeof permissions === "object") {
+      MODULES.forEach((moduleName) => {
+        const incoming = permissions[moduleName];
+        if (!incoming || typeof incoming !== "object") return;
+
+        PERMISSION_ACTIONS.forEach((action) => {
+          if (typeof incoming[action] === "boolean") {
+            staffUser.permissions[moduleName][action] = incoming[action];
+          }
+        });
+        normalizeModule(staffUser.permissions[moduleName]);
       });
-      // Mark the nested path as modified so Mongoose saves it
       staffUser.markModified("permissions");
     }
 
