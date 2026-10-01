@@ -2,7 +2,7 @@
 import mongoose from "mongoose";
 
 // Define the modules that match your frontend
-export const MODULES = [
+ const MODULES = [
   "dashboard",
   "cars",
   "sales",
