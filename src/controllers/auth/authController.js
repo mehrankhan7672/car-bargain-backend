@@ -7,7 +7,7 @@ import path from "path";
 import fs from "fs";
 import bcrypt from "bcryptjs";
 import { fileURLToPath } from "url";
-import User from "../../models/User.js";
+import User ,{ MODULES } from "../../models/User.js";
 import { response } from "express";
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);

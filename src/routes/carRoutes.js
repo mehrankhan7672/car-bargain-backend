@@ -1,26 +1,25 @@
-// src/routes/carRoutes.js
 import express from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import os from "os";
 import { fileURLToPath } from "url";
-import {
-  createCar,
-  getAllCars,
-  getCarById,
-  updateCar,
-  deleteCar,
-  getCarStats,
-  searchCarsByUser,
-} from "../controllers/car/CarController.js";
-import { protect, checkPermission } from "../middleware/authMiddleware.js";
+// ...your other imports stay the same
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const uploadDir = path.join(__dirname, "../../uploads/cars");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+// Vercel's filesystem is read-only except /tmp
+const uploadDir = process.env.VERCEL
+  ? path.join(os.tmpdir(), "uploads", "cars")
+  : path.join(__dirname, "../../uploads/cars");
+
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (err) {
+  console.error("Could not create upload dir:", err.message);
 }
 
 const storage = multer.diskStorage({
