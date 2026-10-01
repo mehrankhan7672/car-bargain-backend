@@ -4,7 +4,16 @@ import path from "path";
 import fs from "fs";
 import os from "os";
 import { fileURLToPath } from "url";
-// ...your other imports stay the same
+import {
+  createCar,
+  getAllCars,
+  getCarById,
+  updateCar,
+  deleteCar,
+  getCarStats,
+  searchCarsByUser,
+} from "../controllers/car/CarController.js";
+import { protect, checkPermission } from "../middleware/authMiddleware.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
