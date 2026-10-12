@@ -2,6 +2,8 @@
 
 import mongoose from "mongoose";
 import Car from "../../models/Car.js";
+import Sale from "../../models/Sale.js";
+import Exchange from "../../models/Exchange.js";
 import { createLog } from "../../utils/logger.js";
 
 // ==================================================
@@ -458,6 +460,56 @@ export const getCarById = async (req, res) => {
 };
 
 // ==================================================
+// Is this car's STATUS locked by a sale or an exchange deal?
+// ==================================================
+//
+// A car is locked when:
+//   - it is "Sold" and a Sale record exists for it, or
+//   - it is part of an exchange deal that is not cancelled.
+//
+// Why: changing the status by hand (e.g. Sold -> Available) would make the car
+// look unsold while the sale / exchange record still exists, so stock and the
+// dashboard numbers stop matching. The user must delete (or cancel) the sale or
+// exchange first - those flows put the car back to Available correctly.
+//
+// A car marked "Sold" by hand with no Sale record is NOT locked, otherwise
+// there would be no way to ever undo it.
+// Returns null (free to change) or { type, message }.
+const getStatusLock = async (car, ownerId) => {
+  if (car.status === "Sold") {
+    const sale = await Sale.findOne({ carId: car._id, userId: ownerId })
+      .select("buyerName")
+      .lean();
+
+    if (sale) {
+      return {
+        type: "sale",
+        message: `This car is already sold${
+          sale.buyerName ? ` to ${sale.buyerName}` : ""
+        }, so its status cannot be changed. If the sale was a mistake, delete the sale first and the car will become Available again.`,
+      };
+    }
+  }
+
+  const exchange = await Exchange.findOne({
+    userId: ownerId,
+    "showroomCar.carId": car._id,
+    status: { $ne: "Cancelled" },
+  })
+    .select("dealNumber status")
+    .lean();
+
+  if (exchange) {
+    return {
+      type: "exchange",
+      message: `This car is part of exchange deal ${exchange.dealNumber} (${exchange.status}), so its status cannot be changed here. Delete or cancel that exchange deal first.`,
+    };
+  }
+
+  return null;
+};
+
+// ==================================================
 // UPDATE CAR
 // ==================================================
 
@@ -490,6 +542,24 @@ export const updateCar = async (req, res) => {
         success: false,
         message: "Car not found",
       });
+    }
+
+    // ----------------------------------------------
+    // Block status changes on cars locked by a sale / exchange
+    // (editing other details of the car is still allowed)
+    // ----------------------------------------------
+
+    if (updateData.status !== undefined && updateData.status !== existingCar.status) {
+      const lock = await getStatusLock(existingCar, req.userId);
+
+      if (lock) {
+        return res.status(409).json({
+          success: false,
+          code: "CAR_STATUS_LOCKED",
+          lockedBy: lock.type,
+          message: lock.message,
+        });
+      }
     }
 
     // ----------------------------------------------
